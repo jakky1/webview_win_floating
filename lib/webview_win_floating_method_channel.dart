@@ -15,7 +15,7 @@ class MethodChannelWebviewWinFloating extends WebviewWinFloatingPlatform {
   final webviewMap = <int, WinWebViewController>{};
   MethodChannelWebviewWinFloating() {
     methodChannel.setMethodCallHandler((call) async {
-      log("[webview] native->flutter: $call");
+      //log("[webview] native->flutter: $call");
       int? webviewId = call.arguments["webviewId"];
       assert(webviewId != null);
       final controller = webviewMap[webviewId];
