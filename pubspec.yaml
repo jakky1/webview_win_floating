@@ -1,6 +1,8 @@
 name: webview_win_floating
 description: WebView for Windows. A Flutter plugin that implements the interface of package webview_flutter.
 homepage: https://github.com/jakky1/webview_win_floating
+repository: https://github.com/jakky1/webview_win_floating
+issue_tracker: https://github.com/jakky1/webview_win_floating/issues
 version: 1.0.0
 
 environment:
