@@ -61,7 +61,7 @@ void WebviewWinFloatingPlugin::HandleMethodCall(
   flutter::EncodableMap arguments = std::get<flutter::EncodableMap>(*method_call.arguments());
   auto webviewId = std::get<int>(arguments[flutter::EncodableValue("webviewId")]);
 
-  std::cout << "native HandleMethodCall(): " << method_call.method_name() << "\n";
+  //std::cout << "native HandleMethodCall(): " << method_call.method_name() << "\n";
 
   bool isCreateCall = method_call.method_name().compare("create") == 0;
   auto webview = webviewMap[webviewId];
@@ -76,7 +76,7 @@ void WebviewWinFloatingPlugin::HandleMethodCall(
     auto onCreate = [shared_result, webviewId, url](HRESULT hr, MyWebView *webview) -> void {
       if (webview != NULL) {
         webviewMap[webviewId] = webview;
-        std::cout << "native create: url = <" << url << ">\n";
+        //std::cout << "native create: url = <" << url << ">\n";
         if (!url.empty()) webview->loadUrl(toWideString(url));
         shared_result->Success(flutter::EncodableValue(true));
       } else {
