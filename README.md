@@ -4,8 +4,8 @@
 
 [visits-count-image]: https://img.shields.io/badge/dynamic/json?label=Visits%20Count&query=value&url=https://api.countapi.xyz/hit/jakky1_webview_win_floating/visits
 
-WebView for Windows.
-A Flutter plugin that implements the interface of [webview_flutter][1].
+Flutter webView for Windows.
+It's also a plugin that implements the interface of [webview_flutter][1].
 
 ![](https://raw.githubusercontent.com/jakky1/webview_win_floating/master/screenshot.jpg)
 
