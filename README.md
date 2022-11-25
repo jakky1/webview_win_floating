@@ -21,7 +21,7 @@ Android / iOS webview is supported by [webview_flutter][1]
 
 This package place a native Windows WebView2 component on the window, NO texture involved !
 
-That's why it called "floating". In Windows, all the Flutter widgets will be covered (invisible) by the webview.
+That's why it called "floating". In Windows, Flutter widgets cannot show on top of the webview.
 
 However, since it is a native WebView2 component, without texture involved, the display speed is the same with native WebView2.
 
@@ -30,7 +30,7 @@ Advantages:
 - support fullscreen
 
 Limitations:
-- all the Flutter widgets will be covered (invisible) by the webview (only in Windows)
+- all the Flutter widgets cannot show on top of the webview (only in Windows)
 - focus switch between webview and flutter widgets is not support (only in Windows)
 
 
