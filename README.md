@@ -30,8 +30,8 @@ Feature:
 - support fullscreen
 - support cross-platform (Windows / Android / iOS)
 
-Limitations:
-- all the Flutter widgets cannot show on top of the webview (only in Windows)
+Limitations: (only in Windows)
+- all the Flutter widgets cannot show on top of the webview
 - cannot push a new route on top of the webview
 - focus switch between webview and flutter widgets (via Tab key) is not support (only in Windows)
 - The webview can be put in a scrollable widget, but you may need to assign a ScrollController to the scrollable widget (to enable reposition the webview when scrolling).
