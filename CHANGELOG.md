@@ -1,3 +1,7 @@
+## 1.0.4
+
+* if the webview is put in a scrollable, update layout when scrolling
+
 ## 1.0.3
 
 * fix compile error

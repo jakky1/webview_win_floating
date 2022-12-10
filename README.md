@@ -17,22 +17,29 @@ But use it with [webview_flutter][1], you can write once then support Windows / 
 
 Android / iOS webview is supported by [webview_flutter][1]
 
-## Advantages & Limitations
+## Features & Limitations
 
-This package place a native Windows WebView2 component on the window, NO texture involved !
+This package place a native Windows WebView2 component on the window, no texture involved.
 
 That's why it called "floating". In Windows, Flutter widgets cannot show on top of the webview.
 
 However, since it is a native WebView2 component, without texture involved, the display speed is the same with native WebView2.
 
-Advantages:
+Feature:
 - fast display speed  (no texture)
 - support fullscreen
+- support cross-platform (Windows / Android / iOS)
 
 Limitations:
 - all the Flutter widgets cannot show on top of the webview (only in Windows)
-- focus switch between webview and flutter widgets is not support (only in Windows)
+- cannot push a new route on top of the webview
+- focus switch between webview and flutter widgets (via Tab key) is not support (only in Windows)
+- The webview can be put in a scrollable widget, but you may need to assign a ScrollController to the scrollable widget (to enable reposition the webview when scrolling).
+- The webview cannot be clipped by Flutter. So if the webview is put in a scrollable, and the webview is outside of the scrollable, the webview is still visible. (However, if the scrollable is filled with the window size, then this issue can be ignored)
 
+Hmm... there are so many limitations.
+
+So try this package only if the limitations mentioned above is not a concern for you, or your app really need cross-platform, or other packages cannot satisfy your requirement (ex. cannot build pass, text blur, low display fps, large ~200MB dll size, security issue when cannot updating the webview core, etc).
 
 ## Installation
 
