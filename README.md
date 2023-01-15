@@ -62,6 +62,12 @@ dependencies:
   webview_flutter: ^3.0.4
 ```
 
+# Problem shootting for building fail
+
+If you build fail with this package, and the error message has the keyword "**MSB3073**":
+
+- run "**flutter build .**" in command line in [**Administrator**] mode
+
 # Usage
 
 ## register webview first
