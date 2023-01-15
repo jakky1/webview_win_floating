@@ -100,7 +100,7 @@ class _WidgetLayoutWrapperWithScrollState
       }
     }
 
-    Offset offset = childOffset.translate(scrollDx, -scrollDy);
+    Offset offset = childOffset.translate(-scrollDx, -scrollDy);
     widget.onLayoutChange(offset, childSize);
   }
 
@@ -108,7 +108,7 @@ class _WidgetLayoutWrapperWithScrollState
     childOffset = offset;
     childSize = size;
 
-    offset = childOffset.translate(scrollDx, -scrollDy);
+    offset = childOffset.translate(-scrollDx, -scrollDy);
     widget.onLayoutChange(offset, size);
   }
 
