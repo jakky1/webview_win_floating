@@ -157,7 +157,7 @@ myChannelName.postMessage("This message is from javascript");
 
 ## controller operations
 
-- controller.loadRequest(url)
+- controller.loadRequest(uri)
 - controller.runJavascript( jsStr )
 - controller.runJavaScriptReturningResult( jsStr )  // return javascript function's return value
 - controller.reload()
