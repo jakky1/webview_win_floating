@@ -66,8 +66,8 @@ class MethodChannelWebviewWinFloating extends WebviewWinFloatingPlatform {
   @override
   Future<bool> create(int webviewId, String? initialUrl) async {
     return await methodChannel.invokeMethod<bool>(
-            'create', {"webviewId": webviewId, "url": initialUrl ?? ""}) ??
-        false;
+            'create', {"webviewId": webviewId, "url": initialUrl ?? ""})
+        ?? false;
   }
 
   @override
@@ -95,7 +95,7 @@ class MethodChannelWebviewWinFloating extends WebviewWinFloatingPlatform {
   }
 
   @override
-  Future<void> runJavascript(int webviewId, String javaScriptString) async {
+  Future<void> runJavaScript(int webviewId, String javaScriptString) async {
     await methodChannel.invokeMethod<void>('runJavascript', {
       "webviewId": webviewId,
       "javaScriptString": javaScriptString,
@@ -104,7 +104,7 @@ class MethodChannelWebviewWinFloating extends WebviewWinFloatingPlatform {
   }
 
   @override
-  Future<String> runJavascriptReturningResult(
+  Future<String> runJavaScriptReturningResult(
       int webviewId, String javaScriptString) async {
     return await methodChannel.invokeMethod<String>('runJavascript', {
           "webviewId": webviewId,

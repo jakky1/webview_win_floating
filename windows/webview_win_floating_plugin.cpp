@@ -76,11 +76,11 @@ void WebviewWinFloatingPlugin::HandleMethodCall(
     auto onCreate = [shared_result, webviewId, url](HRESULT hr, MyWebView *webview) -> void {
       if (webview != NULL) {
         webviewMap[webviewId] = webview;
-        //std::cout << "native create: url = <" << url << ">\n";
+        std::cout << "[webview] native create: id = " << webviewId << std::endl;
         if (!url.empty()) webview->loadUrl(toWideString(url));
         shared_result->Success(flutter::EncodableValue(true));
       } else {
-        std::cout << "[webview] native create failed. result = " << hr << ">\n";
+        std::cerr << "[webview] native create failed. result = " << hr << ">\n";
         shared_result->Error("[webview] native create failed.");
       }
     };

@@ -48,7 +48,7 @@ Add this to your package's `pubspec.yaml` file:
 ```yaml
 dependencies:
   webview_win_floating: ^1.0.0
-  webview_flutter: ^3.0.4
+  webview_flutter: ^4.0.1
 ```
 
 Or
@@ -59,7 +59,7 @@ dependencies:
     git:
       url: https://github.com/jakky1/webview_win_floating.git
       ref: master
-  webview_flutter: ^3.0.4
+  webview_flutter: ^4.0.1
 ```
 
 # Problem shootting for building fail
@@ -76,7 +76,10 @@ Before using webview, you should add the following code:
 ```
 import 'package:webview_win_floating/webview.dart';
 
-if (Platform.isWindows) WebView.platform = WindowsWebViewPlugin();
+void main() {
+  WindowsWebViewPlatform.registerWith(); // add this line ~~~
+  runApp(const MyApp());
+}
 ```
 
 ## Use webview now
@@ -84,62 +87,59 @@ if (Platform.isWindows) WebView.platform = WindowsWebViewPlugin();
 NOTE: all the interface are supplied by [webview_flutter][1]
 
 ```
-  late WebViewController controller;
-  @override
-  Widget build(BuildContext context) {
+final controller = WebViewController();
 
-    Widget webview = WebView(
-      backgroundColor: Colors.black,
-      initialUrl: "https://www.google.com/",
-      javascriptMode: JavascriptMode.unrestricted,
-      onWebViewCreated: (controller) {
-        this.controller = controller;
-      },
-      navigationDelegate: (navigation) {
-        return navigation.url.contains("google") ? NavigationDecision.navigate : NavigationDecision.prevent;
-      },
-      onPageStarted: (url) => print("onPageStarted: $url"),
-      onPageFinished: (url) => print("onPageFinished"),
-      onWebResourceError: (error) => print("error: ${error.failingUrl}"),
-    );
+@override
+void initState() {
+  super.initState();
+  controller.setJavaScriptMode(JavaScriptMode.unrestricted);
+  controller.loadRequest(Uri.parse("https://www.google.com/"));
+}
 
-    return webview;
+@override
+Widget build(BuildContext context) {
+  return WebViewWidget(controller: controller);
 }
 ```
 
 #### enable javascript
 don't forgot to add this line if you want to enable javascript:
 ```
- javascriptMode: JavascriptMode.unrestricted,
+controller.setJavaScriptMode(JavaScriptMode.unrestricted);
 ```
 
 #### restricted user navigation
 For example, to disable the facebook / twitter links in youtube website:
 ```
-navigationDelegate: (navigation) {
-  return navigation.url.contains("youtube") ? NavigationDecision.navigate : NavigationDecision.prevent;
-},
+controller.setNavigationDelegate(NavigationDelegate(
+
+  onNavigationRequest: (request) {
+    return request.url.contains("youtube")
+      ? NavigationDecision.navigate
+      : NavigationDecision.prevent;
+  },
+
+  onPageStarted: (url) => print("onPageStarted: $url"),
+  onPageFinished: (url) => print("onPageFinished: $url"),
+  onWebResourceError: (error) =>
+      print("onWebResourceError: ${error.description}"),
+));
 ```
 
 #### Communication with javascript
 
 Hint: you can rename the name 'myChannelName' in the following code
 ```
-Widget build(BuildContext context) {
-    return WebView(
-        ....
-        javascriptChannels: <JavascriptChannel> { channels },
-        onWebViewCreated: (controller) {
-            controller.loadHtmlString(htmlContent);
-            controller.runJavascript("callByDart(100)");
-        }
-    );
-}
-
-var channels = JavascriptChannel(name: "myChannelName", onMessageReceived: (jmsg) {
+controller.addJavaScriptChannel("myChannelName",
+  onMessageReceived: (JavaScriptMessage jmsg) {
     String message = jmsg.message;
     print(message);  // print "This message is from javascript"
-});
+  }
+);
+
+controller.loadHtmlString(htmlContent);
+controller.runJavascript("callByDart(100)");
+
 
 var htmlContent = '''
 <html>
@@ -157,9 +157,9 @@ myChannelName.postMessage("This message is from javascript");
 
 ## controller operations
 
-- controller.loadUrl(url)
+- controller.loadRequest(url)
 - controller.runJavascript( jsStr )
-- controller.runJavascriptReturningResult( jsStr )  // return javascript function's return value
+- controller.runJavaScriptReturningResult( jsStr )  // return javascript function's return value
 - controller.reload()
 - controller.canGoBack()
 - controller.goBack()
@@ -175,14 +175,14 @@ If your app only runs on Windows, and you want to remove library dependencies as
 ```yaml
 dependencies:
   webview_win_floating: ^1.0.0
-  # webview_flutter: ^3.0.4  # mark this line, for Windows only app
+  # webview_flutter: ^4.0.1  # mark this line for Windows only app
 ```
 
 and modify all the following class name in your code:
 ```
-WebView -> WinWebView  // add "Win" prefix
+WebViewWidget -> WinWebViewWidget  // add "Win" prefix
 WebViewController -> WinWebViewController  // add "Win" prefix
-NavigationDecision  -> WinNavigationDecision  // add "Win" prefix
+NavigationDelegate  -> WinNavigationDelegate  // add "Win" prefix
 ```
 
 just only modify class names. All the properties / method are the same with [webview_flutter][1]
@@ -192,14 +192,12 @@ just only modify class names. All the properties / method are the same with [web
 # Example
 
 ```
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:webview_win_floating/webview.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 void main() {
-  if (Platform.isWindows) WebView.platform = WindowsWebViewPlugin();
+  WindowsWebViewPlatform.registerWith();
   runApp(const MyApp());
 }
 
@@ -211,30 +209,38 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  final controller = WebViewController();
 
   @override
   void initState() {
     super.initState();
+    controller.setJavaScriptMode(JavaScriptMode.unrestricted);
+    controller.setBackgroundColor(Colors.cyanAccent);
+    controller.setNavigationDelegate(NavigationDelegate(
+      onNavigationRequest: (request) {
+        if (request.url.startsWith("https://www.google.com")) {
+          return NavigationDecision.navigate;
+        } else {
+          log("prevent user navigate out of google website!");
+          return NavigationDecision.prevent;
+        }
+      },
+      onPageStarted: (url) => print("onPageStarted: $url"),
+      onPageFinished: (url) => print("onPageFinished: $url"),
+      onWebResourceError: (error) =>
+          print("onWebResourceError: ${error.description}"),
+    ));
+    controller.loadRequest(Uri.parse("https://www.google.com/"));
   }
 
-  late WebViewController controller;
   @override
   Widget build(BuildContext context) {
-
-    Widget webview = WebView(
-      initialUrl: "https://www.youtube.com/",
-      javascriptMode: JavascriptMode.unrestricted,
-      onWebViewCreated: (controller) {
-        this.controller = controller;
-      },
-    );
-
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
           title: const Text('Windows Webview example app'),
         ),
-        body: webview,
+        body: WebViewWidget(controller: controller),
       ),
     );
   }

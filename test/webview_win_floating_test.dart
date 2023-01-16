@@ -79,12 +79,12 @@ class MockWebviewWinFloatingPlatform
   }
 
   @override
-  Future<void> runJavascript(int webviewId, String javaScriptString) {
+  Future<void> runJavaScript(int webviewId, String javaScriptString) {
     throw UnimplementedError();
   }
 
   @override
-  Future<String> runJavascriptReturningResult(int webviewId, String javaScriptString) {
+  Future<String> runJavaScriptReturningResult(int webviewId, String javaScriptString) {
     throw UnimplementedError();
   }
 

@@ -1,11 +1,11 @@
-import 'dart:io';
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:webview_win_floating/webview.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 void main() {
-  if (Platform.isWindows) WebView.platform = WindowsWebViewPlugin();
+  WindowsWebViewPlatform.registerWith();
   runApp(const MyApp());
 }
 
@@ -17,23 +17,34 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  final controller = WebViewController();
+  final srollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
+    controller.setJavaScriptMode(JavaScriptMode.unrestricted);
+    controller.setBackgroundColor(Colors.cyanAccent);
+    controller.setNavigationDelegate(NavigationDelegate(
+      onNavigationRequest: (request) {
+        if (request.url.startsWith("https://www.google.com")) {
+          return NavigationDecision.navigate;
+        } else {
+          log("prevent user navigate out of google website!");
+          return NavigationDecision.prevent;
+        }
+      },
+      onPageStarted: (url) => print("onPageStarted: $url"),
+      onPageFinished: (url) => print("onPageFinished: $url"),
+      onWebResourceError: (error) =>
+          print("onWebResourceError: ${error.description}"),
+    ));
+    controller.loadRequest(Uri.parse("https://www.google.com/"));
   }
 
-  late WebViewController controller;
   @override
   Widget build(BuildContext context) {
-
-    Widget webview = WebView(
-      initialUrl: "https://www.youtube.com/",
-      javascriptMode: JavascriptMode.unrestricted,
-      onWebViewCreated: (controller) {
-        this.controller = controller;
-      },
-    );
+    Widget webview = WebViewWidget(controller: controller);
 
     return MaterialApp(
       home: Scaffold(
