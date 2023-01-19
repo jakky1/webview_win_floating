@@ -81,6 +81,7 @@ public:
 private:
     template<class T> wil::com_ptr<T> getProfile();
     std::wstring nowLoadingUrl;
+    bool m_isNowGoBackForward = false;
 
     std::map<std::wstring, std::wstring> channelMap; // channel name -> id of RemoveScriptToExecuteOnDocumentCreated
     bool m_hasRegisteredChannel = false;
@@ -174,10 +175,14 @@ MyWebViewImpl::MyWebViewImpl(HWND hWnd,
                                 //bool isAllowed = checkUrlAllowed(utf8Url); // TODO
 
                                 bool userInitiated = true;
-                                if (nowLoadingUrl.compare(url.get()) == 0
+                                if (m_isNowGoBackForward
+                                    || nowLoadingUrl.compare(url.get()) == 0
                                     || utf16Url.rfind(L"data:text/html;", 0) == 0) {
                                     // is triggered by loadUrl() or loadHtmlString(), not user initiated
+                                    // or is triggered by goBack / goForward
+                                    // then we don't ask client Dart code (onNavigationRequest) to allow/prevent loading url
                                     nowLoadingUrl = L"";
+                                    m_isNowGoBackForward = false;
                                     userInitiated = false;
                                 }
 
@@ -429,11 +434,13 @@ bool MyWebViewImpl::canGoForward()
 
 void MyWebViewImpl::goBack()
 {
+    m_isNowGoBackForward = true;
     m_pWebview->GoBack();
 }
 
 void MyWebViewImpl::goForward()
 {
+    m_isNowGoBackForward = true;
     m_pWebview->GoForward();
 }
 
