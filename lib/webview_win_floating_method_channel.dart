@@ -66,8 +66,8 @@ class MethodChannelWebviewWinFloating extends WebviewWinFloatingPlatform {
   @override
   Future<bool> create(int webviewId, String? initialUrl) async {
     return await methodChannel.invokeMethod<bool>(
-            'create', {"webviewId": webviewId, "url": initialUrl ?? ""})
-        ?? false;
+            'create', {"webviewId": webviewId, "url": initialUrl ?? ""}) ??
+        false;
   }
 
   @override
@@ -215,5 +215,11 @@ class MethodChannelWebviewWinFloating extends WebviewWinFloatingPlatform {
   @override
   Future<void> dispose(int webviewId) async {
     await methodChannel.invokeMethod<bool>('dispose', {"webviewId": webviewId});
+  }
+
+  @override
+  Future<void> openDevTools(int webviewId) {
+    return methodChannel
+        .invokeMethod<void>('openDevTools', {"webviewId": webviewId});
   }
 }

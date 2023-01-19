@@ -97,6 +97,7 @@ class _WinWebViewWidgetState extends State<WinWebViewWidget> {
 // --------------------------------------------------------------------------
 
 int _gLastWebViewId = 0;
+
 class WinWebViewController {
   final _webviewId = ++_gLastWebViewId;
   late Future<bool> _initFuture;
@@ -128,7 +129,8 @@ class WinWebViewController {
     _javaScriptMessageCallbacks[name] = callback;
     if (!isExists) {
       await _initFuture;
-      await WebviewWinFloatingPlatform.instance.addScriptChannelByName(_webviewId, name);
+      await WebviewWinFloatingPlatform.instance
+          .addScriptChannelByName(_webviewId, name);
     }
   }
 
@@ -137,7 +139,8 @@ class WinWebViewController {
     _javaScriptMessageCallbacks.remove(name);
     if (!isExists) {
       await _initFuture;
-      await WebviewWinFloatingPlatform.instance.removeScriptChannelByName(_webviewId, name);
+      await WebviewWinFloatingPlatform.instance
+          .removeScriptChannelByName(_webviewId, name);
     }
   }
 
@@ -374,5 +377,10 @@ class WinWebViewController {
     await _initFuture;
     WebviewWinFloatingPlatform.instance.unregisterWebView(_webviewId);
     await WebviewWinFloatingPlatform.instance.dispose(_webviewId);
+  }
+
+  Future<void> openDevTools() async {
+    await _initFuture;
+    await WebviewWinFloatingPlatform.instance.openDevTools(_webviewId);
   }
 }
