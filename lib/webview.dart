@@ -21,15 +21,18 @@ class WinNavigationDelegate {
 
   final PageTitleChangedCallback? onPageTitleChanged;
   final FullScreenChangedCallback? onFullScreenChanged;
+  final HistoryChangedCallback? onHistoryChanged;
 
-  WinNavigationDelegate(
-      {this.onNavigationRequest,
-      this.onPageStarted,
-      this.onPageFinished,
-      this.onProgress,
-      this.onWebResourceError,
-      this.onPageTitleChanged,
-      this.onFullScreenChanged});
+  WinNavigationDelegate({
+    this.onNavigationRequest,
+    this.onPageStarted,
+    this.onPageFinished,
+    this.onProgress,
+    this.onWebResourceError,
+    this.onPageTitleChanged,
+    this.onFullScreenChanged,
+    this.onHistoryChanged,
+  });
 }
 
 typedef WebViewCreatedCallback = void Function(
@@ -40,6 +43,7 @@ typedef PageTitleChangedCallback = void Function(String title);
 typedef JavaScriptMessageCallback = void Function(JavaScriptMessage message);
 typedef FullScreenChangedCallback = void Function(bool isFullScreen);
 typedef MoveFocusRequestCallback = void Function(bool isNext);
+typedef HistoryChangedCallback = void Function();
 
 class WinWebViewWidget extends StatefulWidget {
   final WinWebViewController controller;
@@ -211,6 +215,12 @@ class WinWebViewController {
     FullScreenWindow.setFullScreen(isFullScreen);
     if (_navigationDelegate?.onFullScreenChanged != null) {
       _navigationDelegate!.onFullScreenChanged!(isFullScreen);
+    }
+  }
+
+  void notifyHistoryChanged_() {
+    if (_navigationDelegate?.onHistoryChanged != null) {
+      _navigationDelegate!.onHistoryChanged!();
     }
   }
 

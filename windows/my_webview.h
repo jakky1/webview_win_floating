@@ -20,7 +20,9 @@ public:
 		std::function<void(std::string)> onPageTitleChanged,
 		std::function<void(std::string)> onWebMessageReceived,
 		std::function<void(bool)> onMoveFocusRequest,
-		std::function<void(bool)> onFullScreenChanged);
+		std::function<void(bool)> onFullScreenChanged,
+		std::function<void()> onHistoryChanged);
+		
 	//MyWebView();
 	virtual ~MyWebView() {};
 

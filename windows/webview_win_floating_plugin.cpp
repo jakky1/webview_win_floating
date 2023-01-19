@@ -124,7 +124,12 @@ void WebviewWinFloatingPlugin::HandleMethodCall(
       arguments[flutter::EncodableValue("isFullScreen")] = flutter::EncodableValue(isFullScreen ? true : false);
       gMethodChannel->InvokeMethod("OnFullScreenChanged", std::make_unique<flutter::EncodableValue>(arguments));
     };
-    MyWebView::Create(g_NativeHWND, onCreate, onPageStarted, onPageFinished, onPageTitleChanged, onWebMessageReceived, onMoveFocusRequest, onFullScreenChanged);
+    auto onHistoryChanged = [=]() -> void {
+      flutter::EncodableMap arguments;
+      arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
+      gMethodChannel->InvokeMethod("onHistoryChanged", std::make_unique<flutter::EncodableValue>(arguments));
+    };
+    MyWebView::Create(g_NativeHWND, onCreate, onPageStarted, onPageFinished, onPageTitleChanged, onWebMessageReceived, onMoveFocusRequest, onFullScreenChanged, onHistoryChanged);
   } else if (method_call.method_name().compare("updateBounds") == 0) {
     RECT bounds;
     bounds.left = std::get<int>(arguments[flutter::EncodableValue("left")]);
