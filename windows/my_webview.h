@@ -49,4 +49,6 @@ public:
 
 	virtual HRESULT clearCache() = 0;
 	virtual HRESULT clearCookies() = 0;
+
+	virtual void openDevTools() = 0;
 };

@@ -70,8 +70,7 @@ class MockWebviewWinFloatingPlatform
   }
 
   @override
-  void registerWebView(int webviewId, WinWebViewController webview) {
-  }
+  void registerWebView(int webviewId, WinWebViewController webview) {}
 
   @override
   Future<void> reload(int webviewId) {
@@ -84,7 +83,8 @@ class MockWebviewWinFloatingPlatform
   }
 
   @override
-  Future<String> runJavaScriptReturningResult(int webviewId, String javaScriptString) {
+  Future<String> runJavaScriptReturningResult(
+      int webviewId, String javaScriptString) {
     throw UnimplementedError();
   }
 
@@ -104,11 +104,11 @@ class MockWebviewWinFloatingPlatform
   }
 
   @override
-  void unregisterWebView(int webviewId) {
-  }
+  void unregisterWebView(int webviewId) {}
 
   @override
-  Future<void> updateBounds(int webviewId, Offset offset, Size size, double devicePixelRatio) {
+  Future<void> updateBounds(
+      int webviewId, Offset offset, Size size, double devicePixelRatio) {
     throw UnimplementedError();
   }
 
@@ -132,10 +132,15 @@ class MockWebviewWinFloatingPlatform
     throw UnimplementedError();
   }
 
+  @override
+  Future<void> openDevTools(int webviewId) {
+    throw UnimplementedError();
+  }
 }
 
 void main() {
-  final WebviewWinFloatingPlatform initialPlatform = WebviewWinFloatingPlatform.instance;
+  final WebviewWinFloatingPlatform initialPlatform =
+      WebviewWinFloatingPlatform.instance;
 
   test('$MethodChannelWebviewWinFloating is the default instance', () {
     expect(initialPlatform, isInstanceOf<MethodChannelWebviewWinFloating>());
@@ -143,7 +148,8 @@ void main() {
 
   test('getPlatformVersion', () async {
     //WebviewWinFloating webviewWinFloatingPlugin = WebviewWinFloating();
-    MockWebviewWinFloatingPlatform fakePlatform = MockWebviewWinFloatingPlatform();
+    MockWebviewWinFloatingPlatform fakePlatform =
+        MockWebviewWinFloatingPlatform();
     WebviewWinFloatingPlatform.instance = fakePlatform;
 
     //expect(await webviewWinFloatingPlugin.getPlatformVersion(), '42');

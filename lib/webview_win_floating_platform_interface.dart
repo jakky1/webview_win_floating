@@ -11,7 +11,8 @@ abstract class WebviewWinFloatingPlatform extends PlatformInterface {
 
   static final Object _token = Object();
 
-  static WebviewWinFloatingPlatform _instance = MethodChannelWebviewWinFloating();
+  static WebviewWinFloatingPlatform _instance =
+      MethodChannelWebviewWinFloating();
 
   /// The default instance of [WebviewWinFloatingPlatform] to use.
   ///
@@ -34,12 +35,12 @@ abstract class WebviewWinFloatingPlatform extends PlatformInterface {
     throw UnimplementedError();
   }
 
-
   Future<bool> create(int webviewId, String? initialUrl) {
     throw UnimplementedError();
   }
 
-  Future<void> updateBounds(int webviewId, Offset offset, Size size, double devicePixelRatio) {
+  Future<void> updateBounds(
+      int webviewId, Offset offset, Size size, double devicePixelRatio) {
     throw UnimplementedError();
   }
 
@@ -55,7 +56,8 @@ abstract class WebviewWinFloatingPlatform extends PlatformInterface {
     throw UnimplementedError();
   }
 
-  Future<String> runJavaScriptReturningResult(int webviewId, String javaScriptString) {
+  Future<String> runJavaScriptReturningResult(
+      int webviewId, String javaScriptString) {
     throw UnimplementedError();
   }
 
@@ -124,6 +126,10 @@ abstract class WebviewWinFloatingPlatform extends PlatformInterface {
   }
 
   Future<void> dispose(int webviewId) {
+    throw UnimplementedError();
+  }
+
+  Future<void> openDevTools(int webviewId) {
     throw UnimplementedError();
   }
 }

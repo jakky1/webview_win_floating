@@ -267,6 +267,10 @@ class WindowsPlatformWebViewController extends PlatformWebViewController {
   Future<void> setBackgroundColor(Color color) {
     return controller.setBackgroundColor(color);
   }
+
+  Future<void> openDevTools() {
+    return controller.openDevTools();
+  }
 }
 
 // --------------------------------------------------------------------------

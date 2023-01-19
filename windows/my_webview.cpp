@@ -74,6 +74,8 @@ public:
     HRESULT clearCache();
     HRESULT clearCookies();
 
+    void openDevTools() override;
+
 private:
     template<class T> wil::com_ptr<T> getProfile();
     std::wstring nowLoadingUrl;
@@ -463,4 +465,9 @@ HRESULT MyWebViewImpl::clearCookies()
     if (cookieManager == NULL) return E_FAIL;
 
     return cookieManager->DeleteAllCookies();
+}
+
+void MyWebViewImpl::openDevTools()
+{
+    m_pWebview->OpenDevToolsWindow();
 }

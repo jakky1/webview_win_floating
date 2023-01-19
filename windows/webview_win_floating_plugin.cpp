@@ -223,6 +223,9 @@ void WebviewWinFloatingPlugin::HandleMethodCall(
       std::cout << "[webview] native dispose: id = " << webviewId << "\n";
     }
     result->Success(flutter::EncodableValue(true));
+  } else if (method_call.method_name().compare("openDevTools") == 0) {
+    webview->openDevTools();
+    result->Success();
   } else {
     result->NotImplemented();
   }
