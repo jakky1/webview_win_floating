@@ -47,6 +47,8 @@ class MethodChannelWebviewWinFloating extends WebviewWinFloatingPlatform {
         bool? isFullScreen = call.arguments["isFullScreen"];
         assert(isFullScreen != null);
         controller.notifyFullScreenChanged_(isFullScreen!);
+      } else if (call.method == "onHistoryChanged") {
+        controller.notifyHistoryChanged_();
       } else {
         assert(false, "unknown call from native: ${call.method}");
       }

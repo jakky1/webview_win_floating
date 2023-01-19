@@ -45,7 +45,9 @@ public:
         std::function<void(std::string)> onPageTitleChanged,
         std::function<void(std::string)> onWebMessageReceived,
         std::function<void(bool)> onMoveFocusRequest,
-        std::function<void(bool)> onFullScreenChanged);
+        std::function<void(bool)> onFullScreenChanged,
+        std::function<void()> onHistoryChanged);
+
     virtual ~MyWebViewImpl() override;
 
     HRESULT loadUrl(PCWSTR url);
@@ -102,9 +104,10 @@ MyWebView* MyWebView::Create(HWND hWnd,
     std::function<void(std::string)> onPageTitleChanged,
     std::function<void(std::string)> onWebMessageReceived,
     std::function<void(bool)> onMoveFocusRequest,
-    std::function<void(bool)> onFullScreenChanged)
+    std::function<void(bool)> onFullScreenChanged,
+    std::function<void()> onHistoryChanged)
 {
-    return new MyWebViewImpl(hWnd, callback, onPageStarted, onPageFinished, onPageTitleChanged, onWebMessageReceived, onMoveFocusRequest, onFullScreenChanged);
+    return new MyWebViewImpl(hWnd, callback, onPageStarted, onPageFinished, onPageTitleChanged, onWebMessageReceived, onMoveFocusRequest, onFullScreenChanged, onHistoryChanged);
 }
 
 HRESULT InitWebViewRuntime(std::function<void(HRESULT)> callback = nullptr)
@@ -134,7 +137,8 @@ MyWebViewImpl::MyWebViewImpl(HWND hWnd,
     std::function<void(std::string)> onPageTitleChanged,
     std::function<void(std::string)> onWebMessageReceived,
     std::function<void(bool)> onMoveFocusRequest,
-    std::function<void(bool)> onFullScreenChanged)
+    std::function<void(bool)> onFullScreenChanged,
+    std::function<void()> onHistoryChanged)
 {
     InitWebViewRuntime([=](HRESULT hr) -> void {
         if (hr != S_OK) {
@@ -232,6 +236,17 @@ MyWebViewImpl::MyWebViewImpl(HWND hWnd,
                             }
                             return S_OK;
                         }).Get(), NULL);
+
+                m_pWebview->add_HistoryChanged(
+                    Callback<ICoreWebView2HistoryChangedEventHandler>(
+                        [=](ICoreWebView2* sender, IUnknown* args) -> HRESULT {
+                            if (onHistoryChanged) {
+                                onHistoryChanged();
+                            }
+
+                            return S_OK;
+                        })
+                        .Get(), NULL);
 
                 m_pWebview->add_DocumentTitleChanged(
                     Callback<ICoreWebView2DocumentTitleChangedEventHandler>(
