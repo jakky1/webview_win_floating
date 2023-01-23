@@ -116,12 +116,10 @@ class _WidgetLayoutWrapperWithScrollState
 
     Offset offset = childOriginOffset.translate(-scrollOffset.dx, -scrollOffset.dy);
     widget.onLayoutChange(offset, childSize);
-    //print("onScroll: offset = $offset, scrollDy = $dy");
   }
 
   void onLayoutChange(Offset offset, Size size) {
     widget.onLayoutChange(offset, size);
-    //print("onLayoutChange: offset = $offset");
 
     Offset scrollOffset = getScrollbarOffset();
     childOriginOffset = offset.translate(scrollOffset.dx, scrollOffset.dy);
