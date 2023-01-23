@@ -53,10 +53,8 @@ class _WidgetLayoutWrapperWithScrollState
     extends State<WidgetLayoutWrapperWithScroll> {
   // detect the updated scroll position of the parent scrollable widget
   ScrollController? parentScrollController;
-  Offset childOffset = Offset.zero;
+  Offset childOriginOffset = Offset.zero;
   Size childSize = Size.zero;
-  double scrollDx = 0;
-  double scrollDy = 0;
 
   @override
   void didChangeDependencies() {
@@ -75,7 +73,8 @@ class _WidgetLayoutWrapperWithScrollState
 
     ScrollController? scrollController = scrollableState?.widget.controller;
     if (scrollableState != null && scrollController == null) {
-      log("to correctly layout webview in scrollable, please add a ScrollController to the scrollable widget", name: "webview_win_floating");
+      log("to correctly layout webview in scrollable, please add a ScrollController to the scrollable widget",
+          name: "webview_win_floating");
     }
 
     if (parentScrollController != scrollController) {
@@ -96,29 +95,37 @@ class _WidgetLayoutWrapperWithScrollState
     parentScrollController?.removeListener(onParentScrollControllerUpdate);
   }
 
-  void onParentScrollControllerUpdate() {
-    scrollDx = 0;
-    scrollDy = 0;
+  Offset getScrollbarOffset() {
+    double dx = 0;
+    double dy = 0;
     if (parentScrollController != null) {
       for (var pos in parentScrollController!.positions) {
         if (pos.axis == Axis.vertical) {
-          scrollDy += pos.pixels;
+          dy += pos.pixels;
         } else {
-          scrollDx += pos.pixels;
+          dx += pos.pixels;
         }
       }
     }
 
-    Offset offset = childOffset.translate(-scrollDx, -scrollDy);
+    return Offset(dx, dy);
+  }
+
+  void onParentScrollControllerUpdate() {
+    Offset scrollOffset = getScrollbarOffset();
+
+    Offset offset = childOriginOffset.translate(-scrollOffset.dx, -scrollOffset.dy);
     widget.onLayoutChange(offset, childSize);
+    //print("onScroll: offset = $offset, scrollDy = $dy");
   }
 
   void onLayoutChange(Offset offset, Size size) {
-    childOffset = offset;
-    childSize = size;
-
-    offset = childOffset.translate(-scrollDx, -scrollDy);
     widget.onLayoutChange(offset, size);
+    //print("onLayoutChange: offset = $offset");
+
+    Offset scrollOffset = getScrollbarOffset();
+    childOriginOffset = offset.translate(scrollOffset.dx, scrollOffset.dy);
+    childSize = size;
   }
 
   @override
