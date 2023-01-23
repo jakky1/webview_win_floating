@@ -63,7 +63,16 @@ class _WidgetLayoutWrapperWithScrollState
     super.didChangeDependencies();
 
     // support update position when parent scrollable scrolling
-    var scrollableState = Scrollable.of(context);
+    ScrollableState? scrollableState;
+    try {
+      scrollableState = Scrollable.of(context);
+    } catch (_) {
+      // do nothing
+      // Scrollable.of() will throw exception in flutter 3.7
+      //   if webview not in a scrollable widget
+      // but in flutter 3.5 it won't throw exception
+    }
+
     ScrollController? scrollController = scrollableState?.widget.controller;
     if (scrollableState != null && scrollController == null) {
       log("to correctly layout webview in scrollable, please add a ScrollController to the scrollable widget", name: "webview_win_floating");
