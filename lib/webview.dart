@@ -88,7 +88,7 @@ class _WinWebViewWidgetState extends State<WinWebViewWidget> {
   Widget build(BuildContext context) {
     return Container(
       color: widget.controller._backgroundColor,
-      child: WidgetLayoutWrapperWithScroll(
+      child: WidgetLayoutWrapper(
         onLayoutChange: (offset, size) {
           widget.controller._updateBounds(offset, size, devicePixelRatio);
         },
