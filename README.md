@@ -168,7 +168,18 @@ myChannelName.postMessage("This message is from javascript");
 - controller.currentUrl()
 - controller.clearCache()
 
-# standalon mode
+## dispose controller (cleanup webview instance)
+
+```
+controller = null;
+// and make sure no any WebViewWidget keep that controller object.
+```
+
+After official API interface ``webview_flutter: 4.0.0``, controller is disposed after the WebViewController object is garbage collected.
+
+So the controller object may not be disposed immediately when no any pointer keep the controller object.
+
+# standalone mode
 
 If your app only runs on Windows, and you want to remove library dependencies as many as possible, you can modify `pubspec.yaml` file:
 
@@ -186,6 +197,11 @@ NavigationDelegate  -> WinNavigationDelegate  // add "Win" prefix
 ```
 
 just only modify class names. All the properties / method are the same with [webview_flutter][1]
+
+There are some Windows-only API:
+* controller.openDevTools()
+* onHistoryChanged` callback in WinNavigationDelegate
+* controller.dispose()
 
 
 

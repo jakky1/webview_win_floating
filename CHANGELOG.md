@@ -1,3 +1,13 @@
+## 2.0.0
+
+* migrate to webview_flutter_platform_interface: ^2.0.0
+* dispose controller when finalizer called
+* call webview2's suspend / resume when WebViewWidget activate / deactivated
+* Fix: cannot update position when parent scrolling after flutter 3.7.0
+* Fix issue with canGoBack / canGoForward
+* (Windows only) add WinWebViewController.openDevTools()
+* (Windows only) add onHistoryChanged in WinNavigationDelegate
+
 ## 1.0.4
 
 * if the webview is put in a scrollable, update layout when scrolling
