@@ -13,15 +13,22 @@ class MethodChannelWebviewWinFloating extends WebviewWinFloatingPlatform {
   @visibleForTesting
   final methodChannel = const MethodChannel('webview_win_floating');
 
-  final webviewMap = <int, WinWebViewController>{};
+  final webviewMap = <int, WeakReference<WinWebViewController>>{};
   MethodChannelWebviewWinFloating() {
     methodChannel.setMethodCallHandler((call) async {
       //log("[webview] native->flutter: $call");
       int? webviewId = call.arguments["webviewId"];
       assert(webviewId != null);
-      final controller = webviewMap[webviewId];
-      if (controller == null) {
+      final ref = webviewMap[webviewId];
+      if (ref == null) {
         log("webview not found: id = $webviewId");
+        return;
+      }
+
+      final controller = ref.target;
+      if (controller == null) {
+        webviewMap.remove(webviewId);
+        log("webview is alive but not referenced anymore: id = $webviewId");
         return;
       }
 
@@ -57,7 +64,7 @@ class MethodChannelWebviewWinFloating extends WebviewWinFloatingPlatform {
 
   @override
   void registerWebView(int webviewId, WinWebViewController webview) {
-    webviewMap[webviewId] = webview;
+    webviewMap[webviewId] = WeakReference(webview);
   }
 
   @override
@@ -212,6 +219,16 @@ class MethodChannelWebviewWinFloating extends WebviewWinFloatingPlatform {
   Future<void> setBackgroundColor(int webviewId, Color color) async {
     await methodChannel.invokeMethod<void>(
         'setBackgroundColor', {"webviewId": webviewId, "color": color.value});
+  }
+
+  @override
+  Future<void> suspend(int webviewId) async {
+    await methodChannel.invokeMethod<bool>('suspend', {"webviewId": webviewId});
+  }
+
+  @override
+  Future<void> resume(int webviewId) async {
+    await methodChannel.invokeMethod<bool>('resume', {"webviewId": webviewId});
   }
 
   @override

@@ -61,7 +61,7 @@ void WebviewWinFloatingPlugin::HandleMethodCall(
   flutter::EncodableMap arguments = std::get<flutter::EncodableMap>(*method_call.arguments());
   auto webviewId = std::get<int>(arguments[flutter::EncodableValue("webviewId")]);
 
-  //std::cout << "native HandleMethodCall(): " << method_call.method_name() << "\n";
+  //std::cout << "native HandleMethodCall(): " << method_call.method_name() << std::endl;
 
   bool isCreateCall = method_call.method_name().compare("create") == 0;
   auto webview = webviewMap[webviewId];
@@ -80,7 +80,7 @@ void WebviewWinFloatingPlugin::HandleMethodCall(
         if (!url.empty()) webview->loadUrl(toWideString(url));
         shared_result->Success(flutter::EncodableValue(true));
       } else {
-        std::cerr << "[webview] native create failed. result = " << hr << ">\n";
+        std::cerr << "[webview] native create failed. result = " << hr << std::endl;
         shared_result->Error("[webview] native create failed.");
       }
     };
@@ -221,11 +221,20 @@ void WebviewWinFloatingPlugin::HandleMethodCall(
     webview->setBackgroundColor((int32_t)color);
     result->Success();
 
+  } else if (method_call.method_name().compare("suspend") == 0) {
+    webview->setVisible(false);
+    webview->suspend();
+    result->Success();
+  } else if (method_call.method_name().compare("resume") == 0) {
+    webview->resume();
+    webview->setVisible(true);
+    result->Success();
+
   } else if (method_call.method_name().compare("dispose") == 0) {
     if (webview != NULL) {
       delete webview; //TODO:...
       webviewMap.erase(webviewId);
-      std::cout << "[webview] native dispose: id = " << webviewId << "\n";
+      std::cout << "[webview] native dispose: id = " << webviewId << std::endl;
     }
     result->Success(flutter::EncodableValue(true));
   } else if (method_call.method_name().compare("openDevTools") == 0) {

@@ -61,15 +61,21 @@ class _WinWebViewWidgetState extends State<WinWebViewWidget> {
   late double devicePixelRatio;
 
   @override
+  void initState() {
+    super.initState();
+    widget.controller._resume();
+  }
+
+  @override
   void activate() {
     super.activate();
-    widget.controller._setVisibility(true);
+    widget.controller._resume();
   }
 
   @override
   void deactivate() {
     super.deactivate();
-    widget.controller._setVisibility(false);
+    widget.controller._suspend();
   }
 
   @override
@@ -81,7 +87,6 @@ class _WinWebViewWidgetState extends State<WinWebViewWidget> {
   @override
   void dispose() {
     super.dispose();
-    widget.controller._dispose();
   }
 
   @override
@@ -111,7 +116,13 @@ class WinWebViewController {
   String? _currentTitle;
   Color? _backgroundColor;
 
+  static final Finalizer<int> _finalizer = Finalizer((id) {
+    log("webview controller finalizer: $id");
+    _disposeById(id);
+  });
+
   WinWebViewController() {
+    _finalizer.attach(this, _webviewId, detach: this);
     WebviewWinFloatingPlatform.instance.registerWebView(_webviewId, this);
     _initFuture = WebviewWinFloatingPlatform.instance.create(_webviewId, null);
   }
@@ -383,10 +394,25 @@ class WinWebViewController {
 
   //
 
-  Future<void> _dispose() async {
+  Future<void> _suspend() async {
     await _initFuture;
-    WebviewWinFloatingPlatform.instance.unregisterWebView(_webviewId);
-    await WebviewWinFloatingPlatform.instance.dispose(_webviewId);
+    await WebviewWinFloatingPlatform.instance.suspend(_webviewId);
+  }
+
+  Future<void> _resume() async {
+    await _initFuture;
+    await WebviewWinFloatingPlatform.instance.resume(_webviewId);
+  }
+
+  Future<void> dispose() async {
+    await _initFuture;
+    _finalizer.detach(this);
+    _disposeById(_webviewId);
+  }
+
+  static Future<void> _disposeById(int webviewId) async {
+    WebviewWinFloatingPlatform.instance.unregisterWebView(webviewId);
+    await WebviewWinFloatingPlatform.instance.dispose(webviewId);
   }
 
   Future<void> openDevTools() async {

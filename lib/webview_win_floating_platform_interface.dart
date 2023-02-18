@@ -125,6 +125,14 @@ abstract class WebviewWinFloatingPlatform extends PlatformInterface {
     throw UnimplementedError();
   }
 
+  Future<void> suspend(int webviewId) {
+    throw UnimplementedError();
+  }
+
+  Future<void> resume(int webviewId) {
+    throw UnimplementedError();
+  }
+
   Future<void> dispose(int webviewId) {
     throw UnimplementedError();
   }

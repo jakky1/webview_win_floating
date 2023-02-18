@@ -22,7 +22,7 @@ public:
 		std::function<void(bool)> onMoveFocusRequest,
 		std::function<void(bool)> onFullScreenChanged,
 		std::function<void()> onHistoryChanged);
-		
+
 	//MyWebView();
 	virtual ~MyWebView() {};
 
@@ -51,6 +51,9 @@ public:
 
 	virtual HRESULT clearCache() = 0;
 	virtual HRESULT clearCookies() = 0;
+
+	virtual HRESULT suspend() = 0;
+	virtual HRESULT resume() = 0;
 
 	virtual void openDevTools() = 0;
 };

@@ -76,6 +76,9 @@ public:
     HRESULT clearCache();
     HRESULT clearCookies();
 
+	HRESULT suspend();
+	HRESULT resume();
+
     void openDevTools() override;
 
 private:
@@ -487,6 +490,23 @@ HRESULT MyWebViewImpl::clearCookies()
     if (cookieManager == NULL) return E_FAIL;
 
     return cookieManager->DeleteAllCookies();
+}
+
+HRESULT MyWebViewImpl::suspend()
+{
+    auto webview2_3 = m_pWebview.try_query<ICoreWebView2_3>();
+    if (webview2_3 == NULL) return E_FAIL;
+    return webview2_3->TrySuspend(Callback<ICoreWebView2TrySuspendCompletedHandler>(
+        [=](HRESULT errorCode, BOOL isSuccessful) -> HRESULT {
+            return S_OK;
+        }).Get());
+}
+
+HRESULT MyWebViewImpl::resume()
+{
+    auto webview2_3 = m_pWebview.try_query<ICoreWebView2_3>();
+    if (webview2_3 == NULL) return E_FAIL;
+    return webview2_3->Resume();
 }
 
 void MyWebViewImpl::openDevTools()
