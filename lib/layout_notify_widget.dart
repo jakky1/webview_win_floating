@@ -52,7 +52,7 @@ class WidgetLayoutWrapperWithScroll extends StatefulWidget {
 class _WidgetLayoutWrapperWithScrollState
     extends State<WidgetLayoutWrapperWithScroll> {
   // detect the updated scroll position of the parent scrollable widget
-  ScrollController? parentScrollController;
+  ScrollableState? scrollableState;
   Offset childOriginOffset = Offset.zero;
   Size childSize = Size.zero;
 
@@ -61,9 +61,9 @@ class _WidgetLayoutWrapperWithScrollState
     super.didChangeDependencies();
 
     // support update position when parent scrollable scrolling
-    ScrollableState? scrollableState;
+    ScrollableState? newScrollableState;
     try {
-      scrollableState = Scrollable.of(context);
+      newScrollableState = Scrollable.of(context);
     } catch (_) {
       // do nothing
       // Scrollable.of() will throw exception in flutter 3.7
@@ -71,50 +71,39 @@ class _WidgetLayoutWrapperWithScrollState
       // but in flutter 3.5 it won't throw exception
     }
 
-    ScrollController? scrollController = scrollableState?.widget.controller;
-    if (scrollableState != null && scrollController == null) {
-      log("to correctly layout webview in scrollable, please add a ScrollController to the scrollable widget",
-          name: "webview_win_floating");
+    if (scrollableState != newScrollableState) {
+      scrollableState?.position.removeListener(onScrollUpdate);
+      scrollableState = newScrollableState;
     }
 
-    if (parentScrollController != scrollController) {
-      if (parentScrollController != null) {
-        parentScrollController!.removeListener(onParentScrollControllerUpdate);
-      }
-      parentScrollController = scrollController;
-      if (parentScrollController != null) {
-        parentScrollController!.addListener(onParentScrollControllerUpdate);
-      }
-    }
-    //
+    scrollableState?.position.addListener(onScrollUpdate);
   }
 
   @override
   void dispose() {
     super.dispose();
-    parentScrollController?.removeListener(onParentScrollControllerUpdate);
+    scrollableState?.position.removeListener(onScrollUpdate);
   }
 
   Offset getScrollbarOffset() {
     double dx = 0;
     double dy = 0;
-    if (parentScrollController != null) {
-      for (var pos in parentScrollController!.positions) {
-        if (pos.axis == Axis.vertical) {
-          dy += pos.pixels;
+    if (scrollableState != null) {
+      if (scrollableState!.position.axis == Axis.vertical) {
+          dy += scrollableState!.position.pixels;
         } else {
-          dx += pos.pixels;
+          dx += scrollableState!.position.pixels;
         }
-      }
     }
 
     return Offset(dx, dy);
   }
 
-  void onParentScrollControllerUpdate() {
+  void onScrollUpdate() {
     Offset scrollOffset = getScrollbarOffset();
 
-    Offset offset = childOriginOffset.translate(-scrollOffset.dx, -scrollOffset.dy);
+    Offset offset =
+        childOriginOffset.translate(-scrollOffset.dx, -scrollOffset.dy);
     widget.onLayoutChange(offset, childSize);
   }
 
