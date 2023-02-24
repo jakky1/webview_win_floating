@@ -309,6 +309,7 @@ MyWebViewImpl::MyWebViewImpl(HWND hWnd,
 
 MyWebViewImpl::~MyWebViewImpl()
 {
+    m_pController->Close();
     std::cout << "MyWebViewImpl::~MyWebViewImpl()\n";
 }
 
