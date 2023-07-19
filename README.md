@@ -179,6 +179,15 @@ After official API interface ``webview_flutter: 4.0.0``, controller is disposed 
 
 So the controller object may not be disposed immediately when no any pointer keep the controller object.
 
+## set user data folder
+
+```
+String cacheDir = "c:\\test";
+var params = WindowsPlatformWebViewControllerCreationParams(
+    userDataFolder: cacheDir);
+var controller = WebViewController.fromPlatformCreationParams(params);
+```
+
 # standalone mode
 
 If your app only runs on Windows, and you want to remove library dependencies as many as possible, you can modify `pubspec.yaml` file:

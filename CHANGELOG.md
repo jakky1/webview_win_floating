@@ -1,3 +1,6 @@
+## 2.2.0
+* support userDataFolder settings
+
 ## 2.0.0
 
 * migrate to webview_flutter_platform_interface: ^2.0.0
