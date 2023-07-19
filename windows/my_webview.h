@@ -21,7 +21,8 @@ public:
 		std::function<void(std::string)> onWebMessageReceived,
 		std::function<void(bool)> onMoveFocusRequest,
 		std::function<void(bool)> onFullScreenChanged,
-		std::function<void()> onHistoryChanged);
+		std::function<void()> onHistoryChanged,
+		PCWSTR pwUserDataFolder = NULL);
 
 	//MyWebView();
 	virtual ~MyWebView() {};

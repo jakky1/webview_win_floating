@@ -35,7 +35,8 @@ abstract class WebviewWinFloatingPlatform extends PlatformInterface {
     throw UnimplementedError();
   }
 
-  Future<bool> create(int webviewId, String? initialUrl) {
+  Future<bool> create(int webviewId,
+      {String? initialUrl, String? userDataFolder}) {
     throw UnimplementedError();
   }
 

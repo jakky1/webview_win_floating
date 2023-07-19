@@ -46,7 +46,8 @@ public:
         std::function<void(std::string)> onWebMessageReceived,
         std::function<void(bool)> onMoveFocusRequest,
         std::function<void(bool)> onFullScreenChanged,
-        std::function<void()> onHistoryChanged);
+        std::function<void()> onHistoryChanged,
+        PCWSTR pwUserDataFolder);
 
     virtual ~MyWebViewImpl() override;
 
@@ -109,18 +110,20 @@ MyWebView* MyWebView::Create(HWND hWnd,
     std::function<void(std::string)> onWebMessageReceived,
     std::function<void(bool)> onMoveFocusRequest,
     std::function<void(bool)> onFullScreenChanged,
-    std::function<void()> onHistoryChanged)
+    std::function<void()> onHistoryChanged,
+    PCWSTR pwUserDataFolder)
 {
-    return new MyWebViewImpl(hWnd, callback, onPageStarted, onPageFinished, onPageTitleChanged, onWebMessageReceived, onMoveFocusRequest, onFullScreenChanged, onHistoryChanged);
+    return new MyWebViewImpl(hWnd, callback, onPageStarted, onPageFinished, onPageTitleChanged, onWebMessageReceived, onMoveFocusRequest, onFullScreenChanged, onHistoryChanged, pwUserDataFolder);
 }
 
-HRESULT InitWebViewRuntime(std::function<void(HRESULT)> callback = nullptr)
+HRESULT InitWebViewRuntime(PCWSTR pwUserDataFolder, std::function<void(HRESULT)> callback = nullptr)
 {
     if (g_env != NULL) {
         if (callback != nullptr) callback(S_OK);
         return S_OK;
     }
-    return CreateCoreWebView2EnvironmentWithOptions(nullptr, nullptr, nullptr,
+
+    return CreateCoreWebView2EnvironmentWithOptions(nullptr, pwUserDataFolder, nullptr,
         Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
             [callback](HRESULT result, ICoreWebView2Environment* env) -> HRESULT {
                 g_env = env;
@@ -142,9 +145,10 @@ MyWebViewImpl::MyWebViewImpl(HWND hWnd,
     std::function<void(std::string)> onWebMessageReceived,
     std::function<void(bool)> onMoveFocusRequest,
     std::function<void(bool)> onFullScreenChanged,
-    std::function<void()> onHistoryChanged)
+    std::function<void()> onHistoryChanged,
+    PCWSTR pwUserDataFolder = NULL)
 {
-    InitWebViewRuntime([=](HRESULT hr) -> void {
+    InitWebViewRuntime(pwUserDataFolder, [=](HRESULT hr) -> void {
         if (hr != S_OK) {
             onCreated(hr, NULL);
             return;

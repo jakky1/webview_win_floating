@@ -121,10 +121,12 @@ class WinWebViewController {
     _disposeById(id);
   });
 
-  WinWebViewController() {
+  WinWebViewController(String? userDataFolder) {
     _finalizer.attach(this, _webviewId, detach: this);
     WebviewWinFloatingPlatform.instance.registerWebView(_webviewId, this);
-    _initFuture = WebviewWinFloatingPlatform.instance.create(_webviewId, null);
+    _initFuture = WebviewWinFloatingPlatform.instance.create(_webviewId,
+      initialUrl: null,
+      userDataFolder: userDataFolder);
   }
 
   Future<void> setNavigationDelegate(WinNavigationDelegate delegate) async {

@@ -129,7 +129,21 @@ void WebviewWinFloatingPlugin::HandleMethodCall(
       arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
       gMethodChannel->InvokeMethod("onHistoryChanged", std::make_unique<flutter::EncodableValue>(arguments));
     };
-    MyWebView::Create(g_NativeHWND, onCreate, onPageStarted, onPageFinished, onPageTitleChanged, onWebMessageReceived, onMoveFocusRequest, onFullScreenChanged, onHistoryChanged);
+
+    PCWSTR pwUserDataFolder = NULL;
+    WCHAR wUserDataFolder[1024];
+    auto userDataFolder = std::get<std::string>(arguments[flutter::EncodableValue("userDataFolder")]);
+    if (!userDataFolder.empty()) {
+      auto convResult = MultiByteToWideChar(CP_UTF8, 0, userDataFolder.c_str(), -1, wUserDataFolder, sizeof(wUserDataFolder) / sizeof(WCHAR));
+      if (convResult < 0) {
+        std::cout << "[webview_win_floating] native convert userDataFolder to utf16 (WCHAR*) failed: path = " << userDataFolder << std::endl;
+      } else {
+        pwUserDataFolder = wUserDataFolder;
+      }
+    }
+
+    MyWebView::Create(g_NativeHWND, onCreate, onPageStarted, onPageFinished, onPageTitleChanged, onWebMessageReceived, onMoveFocusRequest, onFullScreenChanged, onHistoryChanged, pwUserDataFolder);
+
   } else if (method_call.method_name().compare("updateBounds") == 0) {
     RECT bounds;
     bounds.left = std::get<int>(arguments[flutter::EncodableValue("left")]);

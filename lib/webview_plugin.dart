@@ -114,8 +114,11 @@ class WindowsPlatformWebViewWidget extends PlatformWebViewWidget {
 @immutable
 class WindowsPlatformWebViewControllerCreationParams
     extends PlatformWebViewControllerCreationParams {
+  final String? userDataFolder;
+
   /// Creates a new [WindowsPlatformWebViewControllerCreationParams] instance.
-  const WindowsPlatformWebViewControllerCreationParams() : super();
+  const WindowsPlatformWebViewControllerCreationParams({this.userDataFolder})
+      : super();
 
   /// Creates a [WindowsPlatformWebViewControllerCreationParams] instance based on [PlatformWebViewControllerCreationParams].
   factory WindowsPlatformWebViewControllerCreationParams.fromPlatformWebViewControllerCreationParams(
@@ -127,11 +130,17 @@ class WindowsPlatformWebViewControllerCreationParams
 }
 
 class WindowsPlatformWebViewController extends PlatformWebViewController {
-  final controller = WinWebViewController();
+  late final WinWebViewController controller;
 
   WindowsPlatformWebViewController(
       PlatformWebViewControllerCreationParams params)
-      : super.implementation(params);
+      : super.implementation(params) {
+    String? userDataFolder;
+    if (params is WindowsPlatformWebViewControllerCreationParams) {
+      userDataFolder = params.userDataFolder;
+    }
+    controller = WinWebViewController(userDataFolder);
+  }
 
   @override
   Future<void> setPlatformNavigationDelegate(
