@@ -1,3 +1,7 @@
+## 2.2.2
+
+* Fix: cannot change url when user clicking link if setNavigationDelegate() not called.
+
 ## 2.2.0
 * support userDataFolder settings
 

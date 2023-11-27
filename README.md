@@ -1,7 +1,5 @@
 # webview_win_floating
 
-![pub version][visits-count-image]
-
 [visits-count-image]: https://img.shields.io/badge/dynamic/json?label=Visits%20Count&query=value&url=https://api.countapi.xyz/hit/jakky1_webview_win_floating/visits
 
 Flutter webView for Windows.
