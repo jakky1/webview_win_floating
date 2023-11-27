@@ -73,13 +73,14 @@ class MethodChannelWebviewWinFloating extends WebviewWinFloatingPlatform {
   }
 
   @override
-  Future<bool> create(int webviewId, {String? initialUrl, String? userDataFolder}) async {
-    return await methodChannel.invokeMethod<bool>(
-            'create', {
-              "webviewId": webviewId,
-              "url": initialUrl ?? "",
-              "userDataFolder": userDataFolder ?? ""
-            }) ?? false;
+  Future<bool> create(int webviewId,
+      {String? initialUrl, String? userDataFolder}) async {
+    return await methodChannel.invokeMethod<bool>('create', {
+          "webviewId": webviewId,
+          "url": initialUrl ?? "",
+          "userDataFolder": userDataFolder ?? ""
+        }) ??
+        false;
   }
 
   @override
