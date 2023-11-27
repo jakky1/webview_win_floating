@@ -110,7 +110,7 @@ int _gLastWebViewId = 0;
 class WinWebViewController {
   final _webviewId = ++_gLastWebViewId;
   late Future<bool> _initFuture;
-  WinNavigationDelegate? _navigationDelegate;
+  WinNavigationDelegate _navigationDelegate = WinNavigationDelegate();
   final _javaScriptMessageCallbacks = <String, JavaScriptMessageCallback>{};
   String? _currentUrl;
   String? _currentTitle;
@@ -124,9 +124,8 @@ class WinWebViewController {
   WinWebViewController(String? userDataFolder) {
     _finalizer.attach(this, _webviewId, detach: this);
     WebviewWinFloatingPlatform.instance.registerWebView(_webviewId, this);
-    _initFuture = WebviewWinFloatingPlatform.instance.create(_webviewId,
-      initialUrl: null,
-      userDataFolder: userDataFolder);
+    _initFuture = WebviewWinFloatingPlatform.instance
+        .create(_webviewId, initialUrl: null, userDataFolder: userDataFolder);
   }
 
   Future<void> setNavigationDelegate(WinNavigationDelegate delegate) async {
@@ -177,45 +176,47 @@ class WinWebViewController {
 
   void notifyOnPageStarted_(
       String url, bool isNewWindow, bool isUserInitiated) async {
+    // isUserInitiated==true when user click a link
+    // isUserInitiated==false when loadRequest() called
     // NOTE: in [webview_flutter], every time user click a url will cancel it first,
     //       and ask client by onNavigationRequest().
     //       if client returns cancel, then do nothing
     //       if client returns yes, then call loadUrl(url)
 
-    if (_navigationDelegate == null) return;
-
-    if (isUserInitiated && _navigationDelegate!.onNavigationRequest != null) {
-      NavigationDecision decision =
-          await _navigationDelegate!.onNavigationRequest!(
-              NavigationRequest(url: url, isMainFrame: !isNewWindow));
+    if (isUserInitiated) {
+      NavigationDecision decision = NavigationDecision.navigate;
+      if (_navigationDelegate.onNavigationRequest != null) {
+        decision = await _navigationDelegate.onNavigationRequest!(
+            NavigationRequest(url: url, isMainFrame: !isNewWindow));
+      }
       bool isAllowed = (decision == NavigationDecision.navigate);
       if (isAllowed) loadRequest_(url);
       return;
     }
 
     _currentUrl = url;
-    if (_navigationDelegate!.onPageStarted != null) {
-      _navigationDelegate!.onPageStarted!(url);
+    if (_navigationDelegate.onPageStarted != null) {
+      _navigationDelegate.onPageStarted!(url);
     }
   }
 
   void notifyOnPageFinished_(String url, int errCode) {
     if (errCode == 0) {
-      if (_navigationDelegate?.onPageFinished != null) {
-        _navigationDelegate!.onPageFinished!(url);
+      if (_navigationDelegate.onPageFinished != null) {
+        _navigationDelegate.onPageFinished!(url);
       }
     } else {
-      if (_navigationDelegate?.onWebResourceError != null) {
+      if (_navigationDelegate.onWebResourceError != null) {
         var err = WebResourceError(errorCode: errCode, description: "");
-        _navigationDelegate!.onWebResourceError!(err);
+        _navigationDelegate.onWebResourceError!(err);
       }
     }
   }
 
   void notifyOnPageTitleChanged_(String title) {
     _currentTitle = title;
-    if (_navigationDelegate?.onPageTitleChanged == null) return;
-    _navigationDelegate!.onPageTitleChanged!(title);
+    if (_navigationDelegate.onPageTitleChanged == null) return;
+    _navigationDelegate.onPageTitleChanged!(title);
   }
 
   MoveFocusRequestCallback? onMoveFocusRequestCallback;
@@ -226,14 +227,14 @@ class WinWebViewController {
   void notifyFullScreenChanged_(bool isFullScreen) {
     setFullScreen(isFullScreen);
     FullScreenWindow.setFullScreen(isFullScreen);
-    if (_navigationDelegate?.onFullScreenChanged != null) {
-      _navigationDelegate!.onFullScreenChanged!(isFullScreen);
+    if (_navigationDelegate.onFullScreenChanged != null) {
+      _navigationDelegate.onFullScreenChanged!(isFullScreen);
     }
   }
 
   void notifyHistoryChanged_() {
-    if (_navigationDelegate?.onHistoryChanged != null) {
-      _navigationDelegate!.onHistoryChanged!();
+    if (_navigationDelegate.onHistoryChanged != null) {
+      _navigationDelegate.onHistoryChanged!();
     }
   }
 
