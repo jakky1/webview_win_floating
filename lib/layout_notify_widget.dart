@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
@@ -90,10 +88,10 @@ class _WidgetLayoutWrapperWithScrollState
     double dy = 0;
     if (scrollableState != null) {
       if (scrollableState!.position.axis == Axis.vertical) {
-          dy += scrollableState!.position.pixels;
-        } else {
-          dx += scrollableState!.position.pixels;
-        }
+        dy += scrollableState!.position.pixels;
+      } else {
+        dx += scrollableState!.position.pixels;
+      }
     }
 
     return Offset(dx, dy);

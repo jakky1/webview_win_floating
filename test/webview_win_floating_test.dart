@@ -35,11 +35,6 @@ class MockWebviewWinFloatingPlatform
   }
 
   @override
-  Future<bool> create(int webviewId, String? url) {
-    throw UnimplementedError();
-  }
-
-  @override
   Future<void> dispose(int webviewId) {
     throw UnimplementedError();
   }
@@ -134,6 +129,21 @@ class MockWebviewWinFloatingPlatform
 
   @override
   Future<void> openDevTools(int webviewId) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<bool> create(int webviewId, {String? initialUrl, String? userDataFolder}) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> resume(int webviewId) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> suspend(int webviewId) {
     throw UnimplementedError();
   }
 }
