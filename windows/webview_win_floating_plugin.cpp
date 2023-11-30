@@ -58,10 +58,19 @@ void WebviewWinFloatingPlugin::HandleMethodCall(
     const flutter::MethodCall<flutter::EncodableValue> &method_call,
     std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
 
+  //std::cout << "native HandleMethodCall(): " << method_call.method_name() << std::endl;
+
+  if (method_call.method_name().compare("initPlugin") == 0) {
+    for(auto iter = webviewMap.begin(); iter != webviewMap.end(); iter++) {
+      std::cout << "[webview_win_floating] old webview found, deleting" << std::endl;
+      delete iter->second;
+    }
+    webviewMap.clear();
+    return;
+  }
+
   flutter::EncodableMap arguments = std::get<flutter::EncodableMap>(*method_call.arguments());
   auto webviewId = std::get<int>(arguments[flutter::EncodableValue("webviewId")]);
-
-  //std::cout << "native HandleMethodCall(): " << method_call.method_name() << std::endl;
 
   bool isCreateCall = method_call.method_name().compare("create") == 0;
   auto webview = webviewMap[webviewId];

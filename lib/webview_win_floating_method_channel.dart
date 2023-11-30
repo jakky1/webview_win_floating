@@ -63,6 +63,11 @@ class MethodChannelWebviewWinFloating extends WebviewWinFloatingPlatform {
   }
 
   @override
+  Future<void> initPlugin() {
+    return methodChannel.invokeMethod<void>('initPlugin');
+  }
+
+  @override
   void registerWebView(int webviewId, WinWebViewController webview) {
     webviewMap[webviewId] = WeakReference(webview);
   }
