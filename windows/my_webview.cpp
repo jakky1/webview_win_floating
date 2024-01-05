@@ -166,7 +166,9 @@ MyWebViewImpl::MyWebViewImpl(HWND hWnd,
                 m_pController = controller;
 
                 m_pSettings->put_AreDefaultContextMenusEnabled(FALSE);
-
+#ifndef _DEBUG
+                m_pSettings->put_AreDevToolsEnabled(FALSE);
+#endif
 
                 m_pWebview->add_NavigationStarting(
                     Callback<ICoreWebView2NavigationStartingEventHandler>(
