@@ -175,8 +175,23 @@ MyWebViewImpl::MyWebViewImpl(HWND hWnd,
                         [=](ICoreWebView2* sender, ICoreWebView2NavigationStartingEventArgs* args) -> HRESULT {
                             wil::unique_cotaskmem_string url;
                             UINT64 navigationId = 0;
+                            BOOL isRedirected = FALSE;
+                            BOOL isPostMethod = FALSE;
+                            ICoreWebView2HttpRequestHeaders* headers = nullptr;
                             HRESULT hr = args->get_Uri(&url);
                             args->get_NavigationId(&navigationId);
+                            args->get_IsRedirected(&isRedirected);
+
+                            args->get_RequestHeaders(&headers);
+                            if (headers != nullptr) {
+                                // http POST method always set "Content-Type" header,
+                                // so if "Content-Type" header exists,
+                                // always allow navigation, without asking client code in dart side.
+                                // If we skip the POST request below, all the headers will be discard,
+                                // so the POST request will be failed, and this makes most of the html login-form failed.
+                                headers->Contains(L"Content-Type", &isPostMethod);
+                            }
+
                             if (SUCCEEDED(hr)) {
                                 auto utf16Url = std::wstring(url.get());
                                 auto utf8Url = utf8_encode(utf16Url);
@@ -185,6 +200,8 @@ MyWebViewImpl::MyWebViewImpl(HWND hWnd,
 
                                 bool userInitiated = true;
                                 if (m_isNowGoBackForward
+                                    || isPostMethod == TRUE
+                                    || isRedirected == TRUE
                                     || nowLoadingUrl.compare(url.get()) == 0
                                     || utf16Url.rfind(L"data:text/html;", 0) == 0) {
                                     // is triggered by loadUrl() or loadHtmlString(), not user initiated

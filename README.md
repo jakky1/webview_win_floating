@@ -68,18 +68,6 @@ If you build fail with this package, and the error message has the keyword "**MS
 
 # Usage
 
-## register webview first
-
-Before using webview, you should add the following code:
-```
-import 'package:webview_win_floating/webview.dart';
-
-void main() {
-  WindowsWebViewPlatform.registerWith(); // add this line ~~~
-  runApp(const MyApp());
-}
-```
-
 ## Use webview now
 
 NOTE: all the interface are supplied by [webview_flutter][1]

@@ -1,3 +1,7 @@
+## 2.2.3
+
+* Fix: cannot login into www.facebook.com since http POST method not working
+
 ## 2.2.2
 
 * Fix: cannot change url when user clicking link if setNavigationDelegate() not called.
