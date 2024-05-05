@@ -151,7 +151,7 @@ class WindowsPlatformWebViewController extends PlatformWebViewController {
     if (params is WindowsPlatformWebViewControllerCreationParams) {
       userDataFolder = params.userDataFolder;
     }
-    controller = WinWebViewController(userDataFolder);
+    controller = WinWebViewController(userDataFolder: userDataFolder);
   }
 
   @override

@@ -121,7 +121,7 @@ class WinWebViewController {
     _disposeById(id);
   });
 
-  WinWebViewController(String? userDataFolder) {
+  WinWebViewController({String? userDataFolder}) {
     _finalizer.attach(this, _webviewId, detach: this);
     WebviewWinFloatingPlatform.instance.registerWebView(_webviewId, this);
     _initFuture = WebviewWinFloatingPlatform.instance
