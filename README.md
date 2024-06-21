@@ -204,11 +204,10 @@ There are some Windows-only API:
 
 ```
 import 'package:flutter/material.dart';
-import 'package:webview_win_floating/webview.dart';
+import 'package:webview_win_floating/webview_win_floating.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 void main() {
-  WindowsWebViewPlatform.registerWith();
   runApp(const MyApp());
 }
 

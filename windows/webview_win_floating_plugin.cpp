@@ -60,12 +60,14 @@ void WebviewWinFloatingPlugin::HandleMethodCall(
 
   //std::cout << "native HandleMethodCall(): " << method_call.method_name() << std::endl;
 
-  if (method_call.method_name().compare("initPlugin") == 0) {
+  if (method_call.method_name().compare("clearAll") == 0) {
+    // called when hot-restart in debug mode, and clear all the old webviews which created before hot-restart
     for(auto iter = webviewMap.begin(); iter != webviewMap.end(); iter++) {
       std::cout << "[webview_win_floating] old webview found, deleting" << std::endl;
       delete iter->second;
     }
     webviewMap.clear();
+    result->Success();
     return;
   }
 

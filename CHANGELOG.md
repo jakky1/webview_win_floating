@@ -1,3 +1,8 @@
+## 2.2.4
+
+* Fix: no need to call registerWith()
+* Fix: destroy all old webviews when hot-restart in debugging mode
+
 ## 2.2.3
 
 * Fix: cannot login into www.facebook.com since http POST method not working

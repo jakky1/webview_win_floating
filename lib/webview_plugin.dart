@@ -1,27 +1,13 @@
 import 'dart:developer';
-import 'dart:io';
 
 import 'package:flutter/widgets.dart';
 import 'package:webview_flutter_platform_interface/webview_flutter_platform_interface.dart';
 import 'package:webview_win_floating/webview.dart';
 
-import 'webview_win_floating_platform_interface.dart';
-
 class WindowsWebViewPlatform extends WebViewPlatform {
   /// Registers this class as the default instance of [WebViewPlatform].
-  static final WindowsWebViewPlatform _instance = WindowsWebViewPlatform();
   static void registerWith() {
-    if (Platform.isWindows) WebViewPlatform.instance = _instance;
-
-    // only call initPlugin() in debug mode,
-    // force destroy all old webview before "Restart"
-    assert(destroyAllWebViews());
-  }
-
-  static bool destroyAllWebViews() {
-    WidgetsFlutterBinding.ensureInitialized();
-    WebviewWinFloatingPlatform.instance.initPlugin();
-    return true;
+    WebViewPlatform.instance = WindowsWebViewPlatform();
   }
 
   @override
