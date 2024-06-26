@@ -167,12 +167,25 @@ So the controller object may not be disposed immediately when no any pointer kee
 
 ## set user data folder
 
+For `WebViewController`:
 ```
 String cacheDir = "c:\\test";
 var params = WindowsPlatformWebViewControllerCreationParams(
     userDataFolder: cacheDir);
 var controller = WebViewController.fromPlatformCreationParams(params);
 ```
+
+For `WinWebViewController`:
+```
+final controller = WinWebViewController(userDataFolder: "c:\\cache_webview");
+```
+
+## If application installed in "C:/Program Files/" or other read-only dir
+
+If your application can be install in "C:/Program Files/" or other read-only system directory, the webview cannot create data folder in read-only directory, so it won't work.
+
+In this case, you should specify user data folder as mentioned above.
+
 
 # standalone mode
 
