@@ -182,7 +182,7 @@ final controller = WinWebViewController(userDataFolder: "c:\\cache_webview");
 
 ## If application installed in "C:/Program Files/" or other read-only dir
 
-If your application can be install in "C:/Program Files/" or other read-only system directory, the webview cannot create data folder in read-only directory, so it won't work.
+If your application can be installed in "C:/Program Files/" or other read-only system directory, the webview cannot create data folder in read-only directory, so it won't work.
 
 In this case, you should specify user data folder as mentioned above.
 
