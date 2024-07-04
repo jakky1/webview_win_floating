@@ -15,6 +15,9 @@ class MethodChannelWebviewWinFloating extends WebviewWinFloatingPlatform {
 
   final webviewMap = <int, WeakReference<WinWebViewController>>{};
   MethodChannelWebviewWinFloating() {
+    // When hot-reload, clear all old webviews created before hot-reload
+    methodChannel.invokeMethod<bool>('clearAll');
+
     methodChannel.setMethodCallHandler((call) async {
       //log("[webview] native->flutter: $call");
       int? webviewId = call.arguments["webviewId"];
