@@ -16,7 +16,7 @@ class MethodChannelWebviewWinFloating extends WebviewWinFloatingPlatform {
   final webviewMap = <int, WeakReference<WinWebViewController>>{};
   MethodChannelWebviewWinFloating() {
     assert(() {
-      // When hot-reload, clear all old webviews created before hot-reload
+      // When hot-reload in debugging mode, clear all old webviews created before hot-reload
       methodChannel.invokeMethod<bool>('clearAll');
       return true;
     }());
