@@ -1,3 +1,7 @@
+## 2.2.6
+
+* Fix: runJavaScript() doesn't support non-ASCII characters.
+
 ## 2.2.5
 
 * Fix: destroy all old webviews when hot-restart in debugging mode
