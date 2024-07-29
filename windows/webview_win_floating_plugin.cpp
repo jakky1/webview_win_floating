@@ -21,6 +21,16 @@ flutter::MethodChannel<flutter::EncodableValue>* gMethodChannel = NULL;
 std::map<int, MyWebView*> webviewMap;
 
 #define toWideString(str) std::wstring(str.begin(), str.end()).c_str()
+std::shared_ptr<WCHAR[]> utf8ToUtf16(std::string str8) {
+  int arrSize = (int) str8.length() + 1;
+  std::shared_ptr<WCHAR[]> str16(new WCHAR[arrSize]);
+  auto convResult = MultiByteToWideChar(CP_UTF8, 0, str8.c_str(), -1, str16.get(), arrSize);
+  if (convResult < 0) {
+    std::cout << "[webview_win_floating] native convert tring to utf16 (WCHAR*) failed: str = " << str8 << std::endl;
+  }
+
+  return str16;
+}
 
 // Jacky }
 
@@ -175,7 +185,7 @@ void WebviewWinFloatingPlugin::HandleMethodCall(
     std::shared_ptr<flutter::MethodResult<flutter::EncodableValue>> shared_result = std::move(result);
     auto javaScriptString = std::get<std::string>(arguments[flutter::EncodableValue("javaScriptString")]);
     auto ignoreResult = std::get<bool>(arguments[flutter::EncodableValue("ignoreResult")]);
-    auto hr = webview->runJavascript(toWideString(javaScriptString), ignoreResult, [shared_result, ignoreResult](std::string result) -> void {
+    auto hr = webview->runJavascript(utf8ToUtf16(javaScriptString).get(), ignoreResult, [shared_result, ignoreResult](std::string result) -> void {
       if (ignoreResult) {
         shared_result->Success();
       } else {
