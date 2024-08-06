@@ -27,6 +27,7 @@ public:
 	//MyWebView();
 	virtual ~MyWebView() {};
 
+	virtual void setHasNavigationDecision(bool hasNavigationDecision) = 0;
 	virtual HRESULT loadUrl(LPCWSTR url) = 0;
 	virtual HRESULT loadHtmlString(LPCWSTR html) = 0;
 	virtual HRESULT runJavascript(LPCWSTR javaScriptString, bool ignoreResult = true, std::function<void(std::string)> callback = NULL) = 0;

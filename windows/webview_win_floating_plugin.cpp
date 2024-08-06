@@ -165,6 +165,10 @@ void WebviewWinFloatingPlugin::HandleMethodCall(
 
     MyWebView::Create(g_NativeHWND, onCreate, onPageStarted, onPageFinished, onPageTitleChanged, onWebMessageReceived, onMoveFocusRequest, onFullScreenChanged, onHistoryChanged, pwUserDataFolder);
 
+  } else if (method_call.method_name().compare("setHasNavigationDecision") == 0) {
+    auto hasNavigationDecision = std::get<bool>(arguments[flutter::EncodableValue("hasNavigationDecision")]);
+    webview->setHasNavigationDecision(hasNavigationDecision);
+    result->Success();
   } else if (method_call.method_name().compare("updateBounds") == 0) {
     RECT bounds;
     bounds.left = std::get<int>(arguments[flutter::EncodableValue("left")]);

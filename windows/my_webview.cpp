@@ -51,6 +51,8 @@ public:
 
     virtual ~MyWebViewImpl() override;
 
+	void setHasNavigationDecision(bool hasNavigationDecision);
+
     HRESULT loadUrl(PCWSTR url);
     HRESULT loadHtmlString(PCWSTR html);
     HRESULT runJavascript(PCWSTR javaScriptString, bool ignoreResult, std::function<void(std::string)> callback);
@@ -86,6 +88,7 @@ private:
     template<class T> wil::com_ptr<T> getProfile();
     std::wstring nowLoadingUrl;
     bool m_isNowGoBackForward = false;
+  	bool m_hasNavigationDecision = false;
 
     std::map<std::wstring, std::wstring> channelMap; // channel name -> id of RemoveScriptToExecuteOnDocumentCreated
     bool m_hasRegisteredChannel = false;
@@ -200,6 +203,7 @@ MyWebViewImpl::MyWebViewImpl(HWND hWnd,
 
                                 bool userInitiated = true;
                                 if (m_isNowGoBackForward
+                                    || m_hasNavigationDecision == false
                                     || isPostMethod == TRUE
                                     || isRedirected == TRUE
                                     || nowLoadingUrl.compare(url.get()) == 0
@@ -335,6 +339,12 @@ MyWebViewImpl::~MyWebViewImpl()
     m_pController->Close();
     std::cout << "MyWebViewImpl::~MyWebViewImpl()\n";
 }
+
+void MyWebViewImpl::setHasNavigationDecision(bool hasNavigationDecision)
+{
+    m_hasNavigationDecision = hasNavigationDecision;
+}
+
 
 HRESULT MyWebViewImpl::loadUrl(LPCWSTR url)
 {

@@ -90,6 +90,14 @@ class MethodChannelWebviewWinFloating extends WebviewWinFloatingPlatform {
   }
 
   @override
+  Future<void> setHasNavigationDecision(int webviewId, bool hasNavigationDecision) async {
+    return await methodChannel.invokeMethod<void>('setHasNavigationDecision', {
+          "webviewId": webviewId,
+          "hasNavigationDecision": hasNavigationDecision
+        });
+  }
+
+  @override
   Future<void> updateBounds(
       int webviewId, Offset offset, Size size, double devicePixelRatio) async {
     await methodChannel.invokeMethod<bool>('updateBounds', {

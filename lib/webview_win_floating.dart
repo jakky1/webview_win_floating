@@ -130,6 +130,12 @@ class WinWebViewController {
 
   Future<void> setNavigationDelegate(WinNavigationDelegate delegate) async {
     _navigationDelegate = delegate;
+
+    bool hasNavigationDecision =
+        _navigationDelegate.onNavigationRequest != null;
+    await _initFuture;
+    await WebviewWinFloatingPlatform.instance
+        .setHasNavigationDecision(_webviewId, hasNavigationDecision);
   }
 
   Future<void> setJavaScriptMode(JavaScriptMode javaScriptMode) async {
@@ -183,12 +189,10 @@ class WinWebViewController {
     //       if client returns cancel, then do nothing
     //       if client returns yes, then call loadUrl(url)
 
-    if (isUserInitiated) {
+    if (isUserInitiated && _navigationDelegate.onNavigationRequest != null) {
       NavigationDecision decision = NavigationDecision.navigate;
-      if (_navigationDelegate.onNavigationRequest != null) {
-        decision = await _navigationDelegate.onNavigationRequest!(
-            NavigationRequest(url: url, isMainFrame: !isNewWindow));
-      }
+      decision = await _navigationDelegate.onNavigationRequest!(
+          NavigationRequest(url: url, isMainFrame: !isNewWindow));
       bool isAllowed = (decision == NavigationDecision.navigate);
       if (isAllowed) loadRequest_(url);
       return;

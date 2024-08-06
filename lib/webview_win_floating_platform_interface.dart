@@ -40,6 +40,10 @@ abstract class WebviewWinFloatingPlatform extends PlatformInterface {
     throw UnimplementedError();
   }
 
+  Future<void> setHasNavigationDecision(int webviewId, bool hasNavigationDecision) {
+    throw UnimplementedError();
+  }
+
   Future<void> updateBounds(
       int webviewId, Offset offset, Size size, double devicePixelRatio) {
     throw UnimplementedError();
