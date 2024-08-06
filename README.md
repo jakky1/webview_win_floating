@@ -213,6 +213,12 @@ There are some Windows-only API:
 * controller.dispose()
 
 
+# TroubleShooting
+
+## javascript 'history.back()' issue
+
+If javascript `history.back()` is used in your project, please remove `NavigationDelegate.onNavigationRequest()` implementation in your code, which causes the `history.back()` work incorrectly.
+
 
 # Example
 

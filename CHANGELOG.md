@@ -1,3 +1,7 @@
+## 2.2.7
+
+* Fix: call twice javascript `history.back()` not work as expected. ([#28](https://github.com/jakky1/webview_win_floating/issues/28))
+
 ## 2.2.6
 
 * Fix: runJavaScript() doesn't support non-ASCII characters.
