@@ -23,10 +23,9 @@ std::string utf8_encode(const std::wstring& wstr)
 }
 
 std::string Utf8FromUtf16(LPWSTR wstr) {
-    DWORD dBufSize = WideCharToMultiByte(CP_OEMCP, 0, wstr, -1, NULL, 0, NULL, FALSE);
+    DWORD dBufSize = WideCharToMultiByte(CP_UTF8, 0, wstr, -1, NULL, 0, NULL, FALSE);
     char* dBuf = new char[dBufSize];
-    memset(dBuf, 0, dBufSize);
-    int nRet = WideCharToMultiByte(CP_OEMCP, 0, wstr, -1, dBuf, dBufSize, NULL, FALSE);
+    int nRet = WideCharToMultiByte(CP_UTF8, 0, wstr, -1, dBuf, dBufSize, NULL, FALSE);
     if (nRet <= 0) return "";
     std::string result = std::string(dBuf);
     delete[]dBuf;
