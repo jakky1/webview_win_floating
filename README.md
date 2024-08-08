@@ -72,7 +72,7 @@ If you build fail with this package, and the error message has the keyword "**MS
 
 NOTE: all the interface are supplied by [webview_flutter][1]
 
-```
+```dart
 final controller = WebViewController();
 
 @override
@@ -90,13 +90,13 @@ Widget build(BuildContext context) {
 
 #### enable javascript
 don't forgot to add this line if you want to enable javascript:
-```
+```dart
 controller.setJavaScriptMode(JavaScriptMode.unrestricted);
 ```
 
 #### restricted user navigation
 For example, to disable the facebook / twitter links in youtube website:
-```
+```dart
 controller.setNavigationDelegate(NavigationDelegate(
 
   onNavigationRequest: (request) {
@@ -115,7 +115,7 @@ controller.setNavigationDelegate(NavigationDelegate(
 #### Communication with javascript
 
 Hint: you can rename the name 'myChannelName' in the following code
-```
+```dart
 controller.addJavaScriptChannel("myChannelName",
   onMessageReceived: (JavaScriptMessage jmsg) {
     String message = jmsg.message;
@@ -156,7 +156,7 @@ myChannelName.postMessage("This message is from javascript");
 
 ## dispose controller (cleanup webview instance)
 
-```
+```dart
 controller = null;
 // and make sure no any WebViewWidget keep that controller object.
 ```
@@ -168,7 +168,7 @@ So the controller object may not be disposed immediately when no any pointer kee
 ## set user data folder
 
 For `WebViewController`:
-```
+```dart
 String cacheDir = "c:\\test";
 var params = WindowsPlatformWebViewControllerCreationParams(
     userDataFolder: cacheDir);
@@ -176,7 +176,7 @@ var controller = WebViewController.fromPlatformCreationParams(params);
 ```
 
 For `WinWebViewController`:
-```
+```dart
 final controller = WinWebViewController(userDataFolder: "c:\\cache_webview");
 ```
 
@@ -199,7 +199,7 @@ dependencies:
 ```
 
 and modify all the following class name in your code:
-```
+```dart
 WebViewWidget -> WinWebViewWidget  // add "Win" prefix
 WebViewController -> WinWebViewController  // add "Win" prefix
 NavigationDelegate  -> WinNavigationDelegate  // add "Win" prefix
@@ -222,7 +222,7 @@ If javascript `history.back()` is used in your project, please remove `Navigatio
 
 # Example
 
-```
+```dart
 import 'package:flutter/material.dart';
 import 'package:webview_win_floating/webview_win_floating.dart';
 import 'package:webview_flutter/webview_flutter.dart';
