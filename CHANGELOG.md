@@ -1,3 +1,7 @@
+## 2.2.9
+
+* Fix @30: click "_blank" url with no response after @28 code change.
+
 ## 2.2.8
 
 * Fix @29: post non-ascii string from js to dart via javascriptChannel
