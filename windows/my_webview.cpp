@@ -202,7 +202,6 @@ MyWebViewImpl::MyWebViewImpl(HWND hWnd,
 
                                 bool userInitiated = true;
                                 if (m_isNowGoBackForward
-                                    || m_hasNavigationDecision == false
                                     || isPostMethod == TRUE
                                     || isRedirected == TRUE
                                     || nowLoadingUrl.compare(url.get()) == 0
@@ -220,7 +219,7 @@ MyWebViewImpl::MyWebViewImpl(HWND hWnd,
                                 // always cancel user initiated navigation, and pass this event to [webview_flutter]
                                 // and after [webview_flutter] ask client dart code, if client say yes,
                                 // [webview_flutter] then call loadUrl() to load url again
-                                if (userInitiated) args->put_Cancel(TRUE);
+                                if (userInitiated && m_hasNavigationDecision) args->put_Cancel(TRUE);
                             }
                             return S_OK;
                         }).Get(), NULL);
@@ -234,8 +233,12 @@ MyWebViewImpl::MyWebViewImpl(HWND hWnd,
                                 auto utf8Url = utf8_encode(std::wstring(url.get()));
                                 //bool isAllowed = m_bAllowNewWindow && checkUrlAllowed(utf8Url); //TODO
 
-                                onPageStarted(utf8Url, true, true);
                                 args->put_Handled(TRUE);
+                                if (m_hasNavigationDecision) {
+                                    onPageStarted(utf8Url, true, true);
+                                } else {
+                                    loadUrl(url.get());
+                                }
                             }
 
                             //wil::com_ptr<ICoreWebView2Deferral> deferral;
