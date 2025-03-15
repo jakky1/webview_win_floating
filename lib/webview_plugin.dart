@@ -157,6 +157,10 @@ class WindowsPlatformWebViewController extends PlatformWebViewController {
     return controller.setJavaScriptMode(javaScriptMode);
   }
 
+  Future<void> setStatusBar(bool isEnable) {
+    return controller.setStatusBar(isEnable);
+  }
+
   @override
   Future<void> addJavaScriptChannel(
       JavaScriptChannelParams javaScriptChannelParams) async {
