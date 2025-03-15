@@ -1,3 +1,7 @@
+## 2.2.10
+
+* Feature: add controller.setStatusBar(bool) to show/hide status bar (Windows only)
+
 ## 2.2.9
 
 * Fix @30: click "_blank" url with no response after @28 code change.
