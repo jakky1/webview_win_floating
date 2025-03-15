@@ -145,6 +145,12 @@ class WinWebViewController {
         .enableJavascript(_webviewId, isEnable);
   }
 
+  Future<void> setStatusBar(bool isEnable) async {
+    await _initFuture;
+    await WebviewWinFloatingPlatform.instance
+        .enableStatusBar(_webviewId, isEnable);
+  }
+
   Future<void> addJavaScriptChannel(String name,
       {required JavaScriptMessageCallback callback}) async {
     bool isExists = _javaScriptMessageCallbacks.containsKey(name);

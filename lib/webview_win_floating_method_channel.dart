@@ -172,6 +172,12 @@ class MethodChannelWebviewWinFloating extends WebviewWinFloatingPlatform {
   }
 
   @override
+  Future<void> enableStatusBar(int webviewId, bool isEnable) async {
+    await methodChannel.invokeMethod<bool>(
+        'enableStatusBar', {"webviewId": webviewId, "isEnable": isEnable});
+  }
+
+  @override
   Future<bool> setUserAgent(int webviewId, String userAgent) async {
     bool? b = await methodChannel.invokeMethod<bool?>(
         'setUserAgent', {"webviewId": webviewId, "userAgent": userAgent});
