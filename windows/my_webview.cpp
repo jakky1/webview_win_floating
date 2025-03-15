@@ -60,6 +60,9 @@ public:
     void removeScriptChannelByName(LPCWSTR channelName);
 
     void enableJavascript(bool bEnable);
+
+    void enableStatusBar(bool bEnable);
+
     HRESULT setUserAgent(LPCWSTR userAgent);
 
     HRESULT updateBounds(RECT& bounds);
@@ -444,6 +447,11 @@ HRESULT MyWebViewImpl::requestFocus(bool isNext)
 void MyWebViewImpl::enableJavascript(bool bEnable)
 {
     m_pSettings->put_IsScriptEnabled(bEnable);
+}
+
+void MyWebViewImpl::enableStatusBar(bool bEnable)
+{
+    m_pSettings->put_IsStatusBarEnabled(bEnable);
 }
 
 HRESULT MyWebViewImpl::setUserAgent(LPCWSTR userAgent)

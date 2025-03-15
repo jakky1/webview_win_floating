@@ -36,6 +36,8 @@ public:
 	virtual void removeScriptChannelByName(LPCWSTR channelName) = 0;
 
 	virtual void enableJavascript(bool bEnable) = 0;
+	virtual void enableStatusBar(bool bEnable) = 0;
+
 	virtual HRESULT setUserAgent(LPCWSTR userAgent) = 0;
 
 	virtual HRESULT updateBounds(RECT& bounds) = 0;
