@@ -153,6 +153,7 @@ myChannelName.postMessage("This message is from javascript");
 - controller.canGoForward()
 - controller.currentUrl()
 - controller.clearCache()
+- controller.enableZoom()
 
 ## dispose controller (cleanup webview instance)
 
