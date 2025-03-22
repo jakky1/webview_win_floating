@@ -276,6 +276,11 @@ class WindowsPlatformWebViewController extends PlatformWebViewController {
     return controller.setBackgroundColor(color);
   }
 
+  @override
+  Future<void> enableZoom(bool isEnable) {
+    return controller.enableZoom(isEnable);
+  }
+
   Future<void> openDevTools() {
     return controller.openDevTools();
   }
@@ -283,6 +288,7 @@ class WindowsPlatformWebViewController extends PlatformWebViewController {
   Future<void> setStatusBar(bool isEnable) {
     return controller.setStatusBar(isEnable);
   }
+
 }
 
 // --------------------------------------------------------------------------

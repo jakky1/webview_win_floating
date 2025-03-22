@@ -225,6 +225,10 @@ void WebviewWinFloatingPlugin::HandleMethodCall(
        auto isEnable = std::get<bool>(arguments[flutter::EncodableValue("isEnable")]);
        webview->enableStatusBar(isEnable);
        result->Success(flutter::EncodableValue(true));
+  } else if (method_call.method_name().compare("enableIsZoomControl") == 0) {
+         auto isEnable = std::get<bool>(arguments[flutter::EncodableValue("isEnable")]);
+         webview->enableIsZoomControl(isEnable);
+         result->Success(flutter::EncodableValue(true));
   } else if (method_call.method_name().compare("setUserAgent") == 0) {
     auto userAgent = std::get<std::string>(arguments[flutter::EncodableValue("userAgent")]);
     HRESULT hr = webview->setUserAgent(toWideString(userAgent));
