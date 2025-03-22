@@ -90,6 +90,10 @@ abstract class WebviewWinFloatingPlatform extends PlatformInterface {
     throw UnimplementedError();
   }
 
+  Future<void> enableZoom(int webviewId, bool isEnable) {
+    throw UnimplementedError();
+  }
+
   Future<bool> setUserAgent(int webviewId, String userAgent) {
     throw UnimplementedError();
   }
