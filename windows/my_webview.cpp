@@ -64,6 +64,8 @@ public:
 
     void enableStatusBar(bool bEnable);
 
+    void enableIsZoomControl(bool bEnable);
+
     HRESULT setUserAgent(LPCWSTR userAgent);
 
     HRESULT updateBounds(RECT& bounds);
@@ -499,6 +501,11 @@ void MyWebViewImpl::enableJavascript(bool bEnable)
 void MyWebViewImpl::enableStatusBar(bool bEnable)
 {
     m_pSettings->put_IsStatusBarEnabled(bEnable);
+}
+
+void MyWebViewImpl::enableIsZoomControl(bool bEnable)
+{
+    m_pSettings->put_IsZoomControlEnabled(bEnable);
 }
 
 HRESULT MyWebViewImpl::setUserAgent(LPCWSTR userAgent)

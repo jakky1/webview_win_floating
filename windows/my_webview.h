@@ -40,6 +40,7 @@ public:
 
 	virtual void enableJavascript(bool bEnable) = 0;
 	virtual void enableStatusBar(bool bEnable) = 0;
+	virtual void enableIsZoomControl(bool bEnable) = 0;
 
 	virtual HRESULT setUserAgent(LPCWSTR userAgent) = 0;
 

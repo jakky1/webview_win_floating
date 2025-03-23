@@ -208,6 +208,12 @@ class WinWebViewController {
         .enableStatusBar(_webviewId, isEnable);
   }
 
+  Future<void> enableZoom(bool isEnable) async {
+    await _initFuture;
+    await WebviewWinFloatingPlatform.instance
+        .enableZoom(_webviewId, isEnable);
+  }
+
   Future<void> addJavaScriptChannel(String name,
       {required JavaScriptMessageCallback onMessageReceived}) async {
     bool isExists = _javaScriptMessageCallbacks.containsKey(name);
