@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_win_floating/webview_win_floating.dart';
@@ -14,7 +16,21 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  final controller = WebViewController();
+  final controller = WebViewController(onPermissionRequest: (request) {
+    late final WinWebViewPermissionRequest req;
+    if (Platform.isWindows) {
+      if (request is WinWebViewPermissionRequest) {
+        req = request as WinWebViewPermissionRequest;
+      } else {
+        req = request.platform as WinWebViewPermissionRequest;
+      }
+    } else {
+      return;
+    }
+
+    print("permission: ${req.kind} , ${req.url}");
+    req.grant();
+  });
   final urlController = TextEditingController();
 
   @override
@@ -22,13 +38,14 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     controller.setJavaScriptMode(JavaScriptMode.unrestricted);
     controller.setBackgroundColor(Colors.cyanAccent);
+
     controller.setNavigationDelegate(NavigationDelegate(
       /*
       onNavigationRequest: (request) {
-        if (request.url.startsWith("https://www.youtube.com")) {
+        if (request.url.startsWith("https://www.bnext.com.tw")) {
           return NavigationDecision.navigate;
         } else {
-          print("prevent user navigate out of google website!");
+          print("prevent user navigate out of google website: ${request.url}");
           return NavigationDecision.prevent;
         }
       },
@@ -41,7 +58,19 @@ class _MyAppState extends State<MyApp> {
       onWebResourceError: (error) =>
           print("onWebResourceError: ${error.description}"),
     ));
-    controller.loadRequest(Uri.parse("https://www.google.com/"));
+
+    controller.addJavaScriptChannel("Flutter", onMessageReceived: (message) {
+      print("js -> dart : ${message.message}");
+    });
+    //controller.loadRequest(Uri.parse("https://www.google.com"));
+    controller.loadRequest(Uri.parse(
+        "https://www.bennish.net/web-notifications.html")); // javascript notification test
+    //controller.loadRequest(Uri.parse("https://www.bnext.com.tw"));
+    //controller.loadRequest(Uri.parse("https://www.w3schools.com/tags/tryit.asp?filename=tryhtml_a_target"));
+  }
+
+  void testJavascript() {
+    controller.runJavaScript("Flutter.postMessage('Chinese 中文')");
   }
 
   @override
@@ -57,8 +86,10 @@ class _MyAppState extends State<MyApp> {
       },
     );
     Widget buttonRow = Row(children: [
-      //MyCircleButton(icon: Icons.arrow_back, onTap: controller.goBack),
-      //MyCircleButton(icon: Icons.arrow_forward, onTap: controller.goForward),
+      MyCircleButton(icon: Icons.javascript, onTap: testJavascript),
+      MyCircleButton(icon: Icons.arrow_back, onTap: controller.goBack),
+      MyCircleButton(icon: Icons.arrow_forward, onTap: controller.goForward),
+/*
       MyCircleButton(
           icon: Icons.arrow_back,
           onTap: () {
@@ -69,6 +100,7 @@ class _MyAppState extends State<MyApp> {
           onTap: () {
             controller.runJavaScript("history.forward();");
           }),
+*/
       MyCircleButton(icon: Icons.refresh, onTap: controller.reload),
       Expanded(child: urlBox),
     ]);

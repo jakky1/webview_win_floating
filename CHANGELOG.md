@@ -1,3 +1,7 @@
+## 2.3.0
+
+* Feature: implement Permission request
+
 ## 2.2.10
 
 * Feature: add controller.setStatusBar(bool) to show/hide status bar (Windows only)

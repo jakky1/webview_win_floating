@@ -46,6 +46,7 @@ public:
         std::function<void(bool)> onMoveFocusRequest,
         std::function<void(bool)> onFullScreenChanged,
         std::function<void()> onHistoryChanged,
+        OnAskPermissionFunc onAskPermission,
         PCWSTR pwUserDataFolder);
 
     virtual ~MyWebViewImpl() override;
@@ -86,6 +87,9 @@ public:
 	HRESULT suspend();
 	HRESULT resume();
 
+    void askFlutterPermission(wil::com_ptr<ICoreWebView2PermissionRequestedEventArgs> args, OnAskPermissionFunc onAskPermission);
+    void MyWebViewImpl::grantPermission(int deferralId, BOOL isGranted);
+
     void openDevTools() override;
 
 private:
@@ -96,6 +100,9 @@ private:
 
     std::map<std::wstring, std::wstring> channelMap; // channel name -> id of RemoveScriptToExecuteOnDocumentCreated
     bool m_hasRegisteredChannel = false;
+
+    std::map<int, std::pair< wil::com_ptr<ICoreWebView2PermissionRequestedEventArgs>, wil::com_ptr<ICoreWebView2Deferral> >> permissionArgsMap;
+    int lastPermissionDeferralId = 0;
 
     wil::com_ptr<ICoreWebView2> m_pWebview;
     wil::com_ptr<ICoreWebView2Controller> m_pController;
@@ -118,9 +125,10 @@ MyWebView* MyWebView::Create(HWND hWnd,
     std::function<void(bool)> onMoveFocusRequest,
     std::function<void(bool)> onFullScreenChanged,
     std::function<void()> onHistoryChanged,
+    OnAskPermissionFunc onAskPermission,
     PCWSTR pwUserDataFolder)
 {
-    return new MyWebViewImpl(hWnd, callback, onPageStarted, onPageFinished, onPageTitleChanged, onWebMessageReceived, onMoveFocusRequest, onFullScreenChanged, onHistoryChanged, pwUserDataFolder);
+    return new MyWebViewImpl(hWnd, callback, onPageStarted, onPageFinished, onPageTitleChanged, onWebMessageReceived, onMoveFocusRequest, onFullScreenChanged, onHistoryChanged, onAskPermission, pwUserDataFolder);
 }
 
 HRESULT InitWebViewRuntime(PCWSTR pwUserDataFolder, std::function<void(HRESULT)> callback = nullptr)
@@ -153,6 +161,7 @@ MyWebViewImpl::MyWebViewImpl(HWND hWnd,
     std::function<void(bool)> onMoveFocusRequest,
     std::function<void(bool)> onFullScreenChanged,
     std::function<void()> onHistoryChanged,
+    OnAskPermissionFunc onAskPermission,
     PCWSTR pwUserDataFolder = NULL)
 {
     InitWebViewRuntime(pwUserDataFolder, [=](HRESULT hr) -> void {
@@ -335,10 +344,48 @@ MyWebViewImpl::MyWebViewImpl(HWND hWnd,
                         })
                     .Get(), nullptr);
 
+                hr = m_pWebview->add_PermissionRequested(
+                    Callback<ICoreWebView2PermissionRequestedEventHandler>(
+                        [=](ICoreWebView2* sender, ICoreWebView2PermissionRequestedEventArgs* args) -> HRESULT {
+                            askFlutterPermission(args, onAskPermission);                           
+                            return S_OK;
+                    }).Get(), NULL);
+
                 onCreated(hr, this);
                 return hr;
             }).Get());
         });
+}
+
+void MyWebViewImpl::askFlutterPermission(wil::com_ptr<ICoreWebView2PermissionRequestedEventArgs> args, OnAskPermissionFunc onAskPermission)
+{
+    wil::com_ptr<ICoreWebView2Deferral> deferral;
+    COREWEBVIEW2_PERMISSION_KIND kind;                           
+    wil::unique_cotaskmem_string uri;
+
+    args->get_PermissionKind(&kind);
+    args->get_Uri(&uri);
+    args->GetDeferral(&deferral);
+
+    int deferralId = ++lastPermissionDeferralId;
+    permissionArgsMap[deferralId] = std::pair(args, deferral);
+    onAskPermission(utf8_encode(std::wstring(uri.get())), kind, deferralId);
+}
+
+void MyWebViewImpl::grantPermission(int deferralId, BOOL isGranted)
+{
+    auto it = permissionArgsMap.find(deferralId);
+    if (it == permissionArgsMap.end()) return; // not found
+
+    auto pair = std::move(it->second);
+    permissionArgsMap.erase(it);
+
+    auto args = pair.first;
+    auto deferral = pair.second;
+
+    auto state = isGranted ? COREWEBVIEW2_PERMISSION_STATE_ALLOW : COREWEBVIEW2_PERMISSION_STATE_DENY;
+    args->put_State(state);
+    deferral->Complete();
 }
 
 MyWebViewImpl::~MyWebViewImpl()

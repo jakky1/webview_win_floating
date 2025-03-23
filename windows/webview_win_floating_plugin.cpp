@@ -150,6 +150,14 @@ void WebviewWinFloatingPlugin::HandleMethodCall(
       arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
       gMethodChannel->InvokeMethod("onHistoryChanged", std::make_unique<flutter::EncodableValue>(arguments));
     };
+    auto onAskPermission = [=](std::string url, int kind, int deferralId) -> void {
+      flutter::EncodableMap arguments;
+      arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
+      arguments[flutter::EncodableValue("url")] = flutter::EncodableValue(url);
+      arguments[flutter::EncodableValue("kind")] = flutter::EncodableValue(kind);
+      arguments[flutter::EncodableValue("deferralId")] = flutter::EncodableValue(deferralId);
+      gMethodChannel->InvokeMethod("onAskPermission", std::make_unique<flutter::EncodableValue>(arguments));
+    };
 
     PCWSTR pwUserDataFolder = NULL;
     WCHAR wUserDataFolder[1024];
@@ -163,7 +171,7 @@ void WebviewWinFloatingPlugin::HandleMethodCall(
       }
     }
 
-    MyWebView::Create(g_NativeHWND, onCreate, onPageStarted, onPageFinished, onPageTitleChanged, onWebMessageReceived, onMoveFocusRequest, onFullScreenChanged, onHistoryChanged, pwUserDataFolder);
+    MyWebView::Create(g_NativeHWND, onCreate, onPageStarted, onPageFinished, onPageTitleChanged, onWebMessageReceived, onMoveFocusRequest, onFullScreenChanged, onHistoryChanged, onAskPermission, pwUserDataFolder);
 
   } else if (method_call.method_name().compare("setHasNavigationDecision") == 0) {
     auto hasNavigationDecision = std::get<bool>(arguments[flutter::EncodableValue("hasNavigationDecision")]);
@@ -284,6 +292,11 @@ void WebviewWinFloatingPlugin::HandleMethodCall(
       std::cout << "[webview] native dispose: id = " << webviewId << std::endl;
     }
     result->Success(flutter::EncodableValue(true));
+  } else if (method_call.method_name().compare("grantPermission") == 0) {
+    auto deferralId = std::get<int>(arguments[flutter::EncodableValue("deferralId")]);
+    auto isGranted = std::get<bool>(arguments[flutter::EncodableValue("isGranted")]);
+    webview->grantPermission(deferralId, isGranted);
+    result->Success();    
   } else if (method_call.method_name().compare("openDevTools") == 0) {
     webview->openDevTools();
     result->Success();

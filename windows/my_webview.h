@@ -9,6 +9,8 @@
 //		include "WebView2.h" twice, or include in two .cpp files, may cause compile error (keyword "interface" not defined)...
 //		so I move WebView2-related identifiers to my_webview.cpp to avoid include WebView2.h here...
 //#include <WebView2.h>
+ 
+typedef std::function<void(std::string url, int kind, int deferralId)> OnAskPermissionFunc;
 
 class MyWebView
 {
@@ -22,6 +24,7 @@ public:
 		std::function<void(bool)> onMoveFocusRequest,
 		std::function<void(bool)> onFullScreenChanged,
 		std::function<void()> onHistoryChanged,
+		OnAskPermissionFunc onAskPermission,
 		PCWSTR pwUserDataFolder = NULL);
 
 	//MyWebView();
@@ -59,6 +62,8 @@ public:
 
 	virtual HRESULT suspend() = 0;
 	virtual HRESULT resume() = 0;
+
+	virtual void grantPermission(int deferralId, BOOL isGranted) = 0;
 
 	virtual void openDevTools() = 0;
 };

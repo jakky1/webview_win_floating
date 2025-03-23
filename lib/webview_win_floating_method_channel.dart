@@ -62,6 +62,12 @@ class MethodChannelWebviewWinFloating extends WebviewWinFloatingPlatform {
         controller.notifyFullScreenChanged_(isFullScreen!);
       } else if (call.method == "onHistoryChanged") {
         controller.notifyHistoryChanged_();
+      } else if (call.method == "onAskPermission") {
+        String url = call.arguments["url"]!;
+        int kind = call.arguments["kind"]!;
+        int deferralId = call.arguments["deferralId"]!;
+        controller.notifyAskPermission_(
+            url, WinPermissionKind.values[kind], deferralId);
       } else {
         assert(false, "unknown call from native: ${call.method}");
       }
@@ -90,11 +96,12 @@ class MethodChannelWebviewWinFloating extends WebviewWinFloatingPlatform {
   }
 
   @override
-  Future<void> setHasNavigationDecision(int webviewId, bool hasNavigationDecision) async {
+  Future<void> setHasNavigationDecision(
+      int webviewId, bool hasNavigationDecision) async {
     return await methodChannel.invokeMethod<void>('setHasNavigationDecision', {
-          "webviewId": webviewId,
-          "hasNavigationDecision": hasNavigationDecision
-        });
+      "webviewId": webviewId,
+      "hasNavigationDecision": hasNavigationDecision
+    });
   }
 
   @override
@@ -264,6 +271,15 @@ class MethodChannelWebviewWinFloating extends WebviewWinFloatingPlatform {
   @override
   Future<void> dispose(int webviewId) async {
     await methodChannel.invokeMethod<bool>('dispose', {"webviewId": webviewId});
+  }
+
+  @override
+  Future<void> grantPermission(int webviewId, int deferralId, bool isGranted) {
+    return methodChannel.invokeMethod<void>('grantPermission', {
+      "webviewId": webviewId,
+      "deferralId": deferralId,
+      "isGranted": isGranted
+    });
   }
 
   @override
