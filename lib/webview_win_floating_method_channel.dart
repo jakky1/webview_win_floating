@@ -179,18 +179,6 @@ class MethodChannelWebviewWinFloating extends WebviewWinFloatingPlatform {
   }
 
   @override
-  Future<void> enableStatusBar(int webviewId, bool isEnable) async {
-    await methodChannel.invokeMethod<bool>(
-        'enableStatusBar', {"webviewId": webviewId, "isEnable": isEnable});
-  }
-
-  @override
-  Future<void> enableZoom(int webviewId, bool isEnable) async {
-    await methodChannel.invokeMethod<bool>(
-        'enableIsZoomControl', {"webviewId": webviewId, "isEnable": isEnable});
-  }
-
-  @override
   Future<bool> setUserAgent(int webviewId, String userAgent) async {
     bool? b = await methodChannel.invokeMethod<bool?>(
         'setUserAgent', {"webviewId": webviewId, "userAgent": userAgent});
@@ -282,9 +270,25 @@ class MethodChannelWebviewWinFloating extends WebviewWinFloatingPlatform {
     });
   }
 
+  // ------------------------------------------------------------------------
+  // Windows-only methods
+  // ------------------------------------------------------------------------
+
   @override
   Future<void> openDevTools(int webviewId) {
     return methodChannel
         .invokeMethod<void>('openDevTools', {"webviewId": webviewId});
+  }
+
+  @override
+  Future<void> enableStatusBar(int webviewId, bool isEnable) async {
+    await methodChannel.invokeMethod<bool>(
+        'enableStatusBar', {"webviewId": webviewId, "isEnable": isEnable});
+  }
+
+  @override
+  Future<void> enableZoom(int webviewId, bool isEnable) async {
+    await methodChannel.invokeMethod<bool>(
+        'enableIsZoomControl', {"webviewId": webviewId, "isEnable": isEnable});
   }
 }

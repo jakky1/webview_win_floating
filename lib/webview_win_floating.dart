@@ -202,18 +202,6 @@ class WinWebViewController {
         .enableJavascript(_webviewId, isEnable);
   }
 
-  Future<void> setStatusBar(bool isEnable) async {
-    await _initFuture;
-    await WebviewWinFloatingPlatform.instance
-        .enableStatusBar(_webviewId, isEnable);
-  }
-
-  Future<void> enableZoom(bool isEnable) async {
-    await _initFuture;
-    await WebviewWinFloatingPlatform.instance
-        .enableZoom(_webviewId, isEnable);
-  }
-
   Future<void> addJavaScriptChannel(String name,
       {required JavaScriptMessageCallback onMessageReceived}) async {
     bool isExists = _javaScriptMessageCallbacks.containsKey(name);
@@ -514,8 +502,23 @@ class WinWebViewController {
         .grantPermission(_webviewId, deferralId, isGranted);
   }
 
+  // ------------------------------------------------------------------------
+  // Windows-only methods
+  // ------------------------------------------------------------------------
+
   Future<void> openDevTools() async {
     await _initFuture;
     await WebviewWinFloatingPlatform.instance.openDevTools(_webviewId);
+  }
+
+  Future<void> setStatusBar(bool isEnable) async {
+    await _initFuture;
+    await WebviewWinFloatingPlatform.instance
+        .enableStatusBar(_webviewId, isEnable);
+  }
+
+  Future<void> enableZoom(bool isEnable) async {
+    await _initFuture;
+    await WebviewWinFloatingPlatform.instance.enableZoom(_webviewId, isEnable);
   }
 }
