@@ -35,6 +35,56 @@ class WinNavigationDelegate {
   });
 }
 
+// ignore: must_be_immutable
+class WinWebViewPermissionRequest extends PlatformWebViewPermissionRequest {
+  final WinWebViewController _controller;
+  final int _deferralId;
+  final String url;
+  final PermissionKind kind;
+  bool _isDone = false;
+
+  WinWebViewPermissionRequest._(
+      this._controller, this._deferralId, this.url, this.kind)
+      : super(types: {
+          WebViewPermissionResourceType.camera,
+          WebViewPermissionResourceType.microphone
+        });
+
+  @override
+  Future<void> grant() async {
+    if (_isDone) {
+      print(
+          "WinWebViewPermissionRequest: already called grant() or deny() before. ignored");
+      return;
+    }
+
+    _controller.grantPermission(_deferralId, true);
+    _isDone = true;
+  }
+
+  @override
+  Future<void> deny() async {
+    if (_isDone) {
+      print(
+          "WinWebViewPermissionRequest: already called grant() or deny() before. ignored");
+      return;
+    }
+
+    _controller.grantPermission(_deferralId, false);
+    _isDone = true;
+  }
+}
+
+enum PermissionKind {
+  unknown,
+  microphone,
+  camera,
+  geoLocation,
+  notification,
+  otherSensors,
+  clipboardRead
+} //mapping to COREWEBVIEW2_PERMISSION_KIND
+
 typedef WebViewCreatedCallback = void Function(
     WinWebViewController webViewController);
 typedef PageStartedCallback = void Function(String url);
@@ -44,6 +94,7 @@ typedef JavaScriptMessageCallback = void Function(JavaScriptMessage message);
 typedef FullScreenChangedCallback = void Function(bool isFullScreen);
 typedef MoveFocusRequestCallback = void Function(bool isNext);
 typedef HistoryChangedCallback = void Function();
+typedef AskPermissionCallback = bool Function(String url, PermissionKind kind);
 
 class WinWebViewWidget extends StatefulWidget {
   final WinWebViewController controller;
@@ -115,13 +166,18 @@ class WinWebViewController {
   String? _currentUrl;
   String? _currentTitle;
   Color? _backgroundColor;
+  void Function(WinWebViewPermissionRequest request)? _onPermissionRequest;
 
   static final Finalizer<int> _finalizer = Finalizer((id) {
     log("webview controller finalizer: $id");
     _disposeById(id);
   });
 
-  WinWebViewController({String? userDataFolder}) {
+  WinWebViewController(
+      {String? userDataFolder,
+      void Function(WinWebViewPermissionRequest request)?
+          onPermissionRequest}) {
+    _onPermissionRequest = onPermissionRequest;
     _finalizer.attach(this, _webviewId, detach: this);
     WebviewWinFloatingPlatform.instance.registerWebView(_webviewId, this);
     _initFuture = WebviewWinFloatingPlatform.instance
@@ -152,9 +208,9 @@ class WinWebViewController {
   }
 
   Future<void> addJavaScriptChannel(String name,
-      {required JavaScriptMessageCallback callback}) async {
+      {required JavaScriptMessageCallback onMessageReceived}) async {
     bool isExists = _javaScriptMessageCallbacks.containsKey(name);
-    _javaScriptMessageCallbacks[name] = callback;
+    _javaScriptMessageCallbacks[name] = onMessageReceived;
     if (!isExists) {
       await _initFuture;
       await WebviewWinFloatingPlatform.instance
@@ -245,6 +301,22 @@ class WinWebViewController {
   void notifyHistoryChanged_() {
     if (_navigationDelegate.onHistoryChanged != null) {
       _navigationDelegate.onHistoryChanged!();
+    }
+  }
+
+  void setOnPlatformPermissionRequest_(
+      void Function(PlatformWebViewPermissionRequest request)
+          onPermissionRequest) {
+    _onPermissionRequest = onPermissionRequest;
+  }
+
+  void notifyAskPermission_(String url, PermissionKind kind, int deferralId) {
+    if (_onPermissionRequest != null) {
+      var req = WinWebViewPermissionRequest._(this, deferralId, url, kind);
+      _onPermissionRequest!(req);
+    } else {
+      // if user not listen to permission request, always deny
+      grantPermission(deferralId, false);
     }
   }
 
@@ -426,6 +498,12 @@ class WinWebViewController {
   static Future<void> _disposeById(int webviewId) async {
     WebviewWinFloatingPlatform.instance.unregisterWebView(webviewId);
     await WebviewWinFloatingPlatform.instance.dispose(webviewId);
+  }
+
+  Future<void> grantPermission(int deferralId, bool isGranted) async {
+    await _initFuture;
+    await WebviewWinFloatingPlatform.instance
+        .grantPermission(_webviewId, deferralId, isGranted);
   }
 
   Future<void> openDevTools() async {

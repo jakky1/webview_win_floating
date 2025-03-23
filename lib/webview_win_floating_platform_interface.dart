@@ -40,7 +40,8 @@ abstract class WebviewWinFloatingPlatform extends PlatformInterface {
     throw UnimplementedError();
   }
 
-  Future<void> setHasNavigationDecision(int webviewId, bool hasNavigationDecision) {
+  Future<void> setHasNavigationDecision(
+      int webviewId, bool hasNavigationDecision) {
     throw UnimplementedError();
   }
 
@@ -143,6 +144,10 @@ abstract class WebviewWinFloatingPlatform extends PlatformInterface {
   }
 
   Future<void> dispose(int webviewId) {
+    throw UnimplementedError();
+  }
+
+  Future<void> grantPermission(int webviewId, int deferralId, bool isGranted) {
     throw UnimplementedError();
   }
 

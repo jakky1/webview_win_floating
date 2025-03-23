@@ -157,12 +157,11 @@ class WindowsPlatformWebViewController extends PlatformWebViewController {
     return controller.setJavaScriptMode(javaScriptMode);
   }
 
-
   @override
   Future<void> addJavaScriptChannel(
       JavaScriptChannelParams javaScriptChannelParams) async {
     controller.addJavaScriptChannel(javaScriptChannelParams.name,
-        callback: javaScriptChannelParams.onMessageReceived);
+        onMessageReceived: javaScriptChannelParams.onMessageReceived);
   }
 
   @override
@@ -274,6 +273,13 @@ class WindowsPlatformWebViewController extends PlatformWebViewController {
   @override
   Future<void> setBackgroundColor(Color color) {
     return controller.setBackgroundColor(color);
+  }
+
+  @override
+  Future<void> setOnPlatformPermissionRequest(
+    void Function(PlatformWebViewPermissionRequest request) onPermissionRequest,
+  ) async {
+    controller.setOnPlatformPermissionRequest_(onPermissionRequest);
   }
 
   Future<void> openDevTools() {
