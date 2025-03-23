@@ -171,6 +171,8 @@ Some websites use javascript to ask webview to provide certain access permission
 
 You can decide whether to authorize these permission requests.
 
+For example, you can test `Notification` permission with the following code, in [this site](https://www.bennish.net/web-notifications.html)
+
 ```dart
 final controller = WebViewController(onPermissionRequest: (request) {
   if (Platform.isWindows) {
