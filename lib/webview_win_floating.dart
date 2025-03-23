@@ -40,7 +40,7 @@ class WinWebViewPermissionRequest extends PlatformWebViewPermissionRequest {
   final WinWebViewController _controller;
   final int _deferralId;
   final String url;
-  final PermissionKind kind;
+  final WinPermissionKind kind;
   bool _isDone = false;
 
   WinWebViewPermissionRequest._(
@@ -75,7 +75,7 @@ class WinWebViewPermissionRequest extends PlatformWebViewPermissionRequest {
   }
 }
 
-enum PermissionKind {
+enum WinPermissionKind {
   unknown,
   microphone,
   camera,
@@ -94,7 +94,8 @@ typedef JavaScriptMessageCallback = void Function(JavaScriptMessage message);
 typedef FullScreenChangedCallback = void Function(bool isFullScreen);
 typedef MoveFocusRequestCallback = void Function(bool isNext);
 typedef HistoryChangedCallback = void Function();
-typedef AskPermissionCallback = bool Function(String url, PermissionKind kind);
+typedef AskPermissionCallback = bool Function(
+    String url, WinPermissionKind kind);
 
 class WinWebViewWidget extends StatefulWidget {
   final WinWebViewController controller;
@@ -310,7 +311,8 @@ class WinWebViewController {
     _onPermissionRequest = onPermissionRequest;
   }
 
-  void notifyAskPermission_(String url, PermissionKind kind, int deferralId) {
+  void notifyAskPermission_(
+      String url, WinPermissionKind kind, int deferralId) {
     if (_onPermissionRequest != null) {
       var req = WinWebViewPermissionRequest._(this, deferralId, url, kind);
       _onPermissionRequest!(req);
