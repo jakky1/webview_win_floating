@@ -270,6 +270,12 @@ class MethodChannelWebviewWinFloating extends WebviewWinFloatingPlatform {
     });
   }
 
+  @override
+  Future<void> enableZoom(int webviewId, bool isEnable) async {
+    await methodChannel.invokeMethod<bool>(
+        'enableIsZoomControl', {"webviewId": webviewId, "isEnable": isEnable});
+  }
+
   // ------------------------------------------------------------------------
   // Windows-only methods
   // ------------------------------------------------------------------------
@@ -284,11 +290,5 @@ class MethodChannelWebviewWinFloating extends WebviewWinFloatingPlatform {
   Future<void> enableStatusBar(int webviewId, bool isEnable) async {
     await methodChannel.invokeMethod<bool>(
         'enableStatusBar', {"webviewId": webviewId, "isEnable": isEnable});
-  }
-
-  @override
-  Future<void> enableZoom(int webviewId, bool isEnable) async {
-    await methodChannel.invokeMethod<bool>(
-        'enableIsZoomControl', {"webviewId": webviewId, "isEnable": isEnable});
   }
 }

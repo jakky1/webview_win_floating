@@ -282,6 +282,15 @@ class WindowsPlatformWebViewController extends PlatformWebViewController {
     controller.setOnPlatformPermissionRequest_(onPermissionRequest);
   }
 
+  @override
+  Future<void> enableZoom(bool isEnable) {
+    return controller.enableZoom(isEnable);
+  }
+
+  // ------------------------------------------------------------------------
+  // Windows-only methods
+  // ------------------------------------------------------------------------
+
   Future<void> openDevTools() {
     return controller.openDevTools();
   }
@@ -289,12 +298,6 @@ class WindowsPlatformWebViewController extends PlatformWebViewController {
   Future<void> setStatusBar(bool isEnable) {
     return controller.setStatusBar(isEnable);
   }
-
-  @override
-  Future<void> enableZoom(bool isEnable) {
-    return controller.enableZoom(isEnable);
-  }
-
 }
 
 // --------------------------------------------------------------------------

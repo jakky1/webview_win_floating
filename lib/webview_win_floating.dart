@@ -502,6 +502,11 @@ class WinWebViewController {
         .grantPermission(_webviewId, deferralId, isGranted);
   }
 
+  Future<void> enableZoom(bool isEnable) async {
+    await _initFuture;
+    await WebviewWinFloatingPlatform.instance.enableZoom(_webviewId, isEnable);
+  }
+
   // ------------------------------------------------------------------------
   // Windows-only methods
   // ------------------------------------------------------------------------
@@ -515,10 +520,5 @@ class WinWebViewController {
     await _initFuture;
     await WebviewWinFloatingPlatform.instance
         .enableStatusBar(_webviewId, isEnable);
-  }
-
-  Future<void> enableZoom(bool isEnable) async {
-    await _initFuture;
-    await WebviewWinFloatingPlatform.instance.enableZoom(_webviewId, isEnable);
   }
 }

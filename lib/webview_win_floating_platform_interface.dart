@@ -147,6 +147,10 @@ abstract class WebviewWinFloatingPlatform extends PlatformInterface {
     throw UnimplementedError();
   }
 
+  Future<void> enableZoom(int webviewId, bool isEnable) {
+    throw UnimplementedError();
+  }
+
   // ------------------------------------------------------------------------
   // Windows-only methods
   // ------------------------------------------------------------------------
@@ -156,10 +160,6 @@ abstract class WebviewWinFloatingPlatform extends PlatformInterface {
   }
 
   Future<void> enableStatusBar(int webviewId, bool isEnable) {
-    throw UnimplementedError();
-  }
-
-  Future<void> enableZoom(int webviewId, bool isEnable) {
     throw UnimplementedError();
   }
 }
