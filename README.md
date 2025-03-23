@@ -165,6 +165,46 @@ After official API interface ``webview_flutter: 4.0.0``, controller is disposed 
 
 So the controller object may not be disposed immediately when no any pointer keep the controller object.
 
+## Permission request (e.g., Notification, Camera)
+
+Some websites use javascript to ask webview to provide certain access permissions. For example, javascript ask "Notification" permission to show notifications, ask "Camera" to access camera device.
+
+You can decide whether to authorize these permission requests.
+
+```dart
+final controller = WebViewController(onPermissionRequest: (request) {
+  if (Platform.isWindows) {
+    var req = request.platform as WinWebViewPermissionRequest;
+    print("permission: ${req.kind} , ${req.url}");
+    
+    // only allow "notification", deny all others
+    if (req.kind == WinPermissionKind.notification) {
+      req.grant();
+    } else {
+      req.deny();
+    }
+  }
+});
+```
+
+If `onPermissionRequest` is not provided, all the permission requests will be denied automatically:
+```dart
+final controller = WebViewController();
+```
+
+Diffrent platforms have different implementations. Windows WebView2 allow you to grant/deny the following permission types:
+```dart
+enum WinPermissionKind {
+  unknown,
+  microphone,
+  camera,
+  geoLocation,
+  notification,
+  otherSensors,
+  clipboardRead
+}
+```
+
 ## set user data folder
 
 For `WebViewController`:
@@ -206,6 +246,20 @@ NavigationDelegate  -> WinNavigationDelegate  // add "Win" prefix
 ```
 
 just only modify class names. All the properties / method are the same with [webview_flutter][1]
+
+For permission grant/deny:
+```dart
+final controller = WinWebViewController(onPermissionRequest: (req) {
+  print("permission: ${req.kind} , ${req.url}");
+    
+  // only allow "notification", deny all others
+  if (req.kind == WinPermissionKind.notification) {
+    req.grant();
+  } else {
+    req.deny();
+  }
+});
+```
 
 There are some Windows-only API:
 * controller.openDevTools()
