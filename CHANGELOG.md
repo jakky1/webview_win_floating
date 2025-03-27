@@ -1,4 +1,4 @@
-## 2.3.0
+## 2.3.1
 
 * Feature: implement Permission request
 * Feature: add controller.enableZoom(bool)
