@@ -181,7 +181,7 @@ final controller = WebViewController(onPermissionRequest: (request) {
     print("permission: ${req.kind} , ${req.url}");
     
     // only allow "notification", deny all others
-    if (req.kind == WinPermissionKind.notification) {
+    if (req.kind == WinWebViewPermissionResourceType.notification) {
       req.grant();
     } else {
       req.deny();
@@ -197,7 +197,7 @@ final controller = WebViewController();
 
 Diffrent platforms have different implementations. Windows WebView2 allow you to grant/deny the following permission types:
 ```dart
-enum WinPermissionKind {
+enum WinWebViewPermissionResourceType {
   unknown,
   microphone,
   camera,
@@ -256,7 +256,7 @@ final controller = WinWebViewController(onPermissionRequest: (req) {
   print("permission: ${req.kind} , ${req.url}");
     
   // only allow "notification", deny all others
-  if (req.kind == WinPermissionKind.notification) {
+  if (req.kind == WinWebViewPermissionResourceType.notification) {
     req.grant();
   } else {
     req.deny();
