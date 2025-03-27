@@ -4,6 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_win_floating/webview_win_floating.dart';
 
+//typedef WebViewController = WinWebViewController;
+//typedef WebViewWidget = WinWebViewWidget;
+//typedef NavigationDelegate = WinNavigationDelegate;
+
 void main() {
   runApp(const MyApp());
 }
@@ -17,19 +21,20 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final controller = WebViewController(onPermissionRequest: (request) {
-    late final WinWebViewPermissionRequest req;
     if (Platform.isWindows) {
+      late final WinWebViewPermissionRequest req;
       if (request is WinWebViewPermissionRequest) {
         req = request as WinWebViewPermissionRequest;
       } else {
         req = request.platform as WinWebViewPermissionRequest;
       }
+      print("permission: ${req.kind} , ${req.url}");
     } else {
       return;
     }
 
-    print("permission: ${req.kind} , ${req.url}");
-    req.grant();
+    request.grant();
+    //req.deny();
   });
   final urlController = TextEditingController();
 

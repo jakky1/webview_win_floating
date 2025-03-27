@@ -67,7 +67,7 @@ class MethodChannelWebviewWinFloating extends WebviewWinFloatingPlatform {
         int kind = call.arguments["kind"]!;
         int deferralId = call.arguments["deferralId"]!;
         controller.notifyAskPermission_(
-            url, WinPermissionKind.values[kind], deferralId);
+            url, WinWebViewPermissionResourceType.values[kind], deferralId);
       } else {
         assert(false, "unknown call from native: ${call.method}");
       }
