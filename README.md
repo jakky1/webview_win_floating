@@ -269,6 +269,7 @@ There are some Windows-only API:
 * onHistoryChanged` callback in WinNavigationDelegate
 * controller.dispose()
 * controller.setStatusBar(bool isEnable): show/hide [status bar](https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2settings.isstatusbarenabled)
+* controller.captureScreenshot()
 
 
 # TroubleShooting

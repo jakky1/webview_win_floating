@@ -67,6 +67,7 @@ public:
     void enableIsZoomControl(bool bEnable);
 
     HRESULT setUserAgent(LPCWSTR userAgent);
+    HRESULT captureScreenshot(std::function<void(HRESULT, std::vector<uint8_t>)> callback);
 
     HRESULT updateBounds(RECT& bounds);
     HRESULT getBounds(RECT& bounds);
@@ -517,6 +518,41 @@ HRESULT MyWebViewImpl::setUserAgent(LPCWSTR userAgent)
         return hr;
     }
     return E_FAIL;
+}
+
+HRESULT MyWebViewImpl::captureScreenshot(std::function<void(HRESULT, std::vector<uint8_t>)> callback)
+{
+    Microsoft::WRL::ComPtr<IStream> stream;
+    HRESULT hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    if (FAILED(hr)) {
+        if (callback) callback(hr, {});
+        return hr;
+    }
+
+    hr = m_pWebview->CapturePreview(
+        COREWEBVIEW2_CAPTURE_PREVIEW_IMAGE_FORMAT_JPEG,
+        stream.Get(),
+        Microsoft::WRL::Callback<ICoreWebView2CapturePreviewCompletedHandler>(
+            [stream, callback](HRESULT result) -> HRESULT {
+                std::vector<uint8_t> data;
+                if (SUCCEEDED(result)) {
+                    STATSTG statstg = {};
+                    if (SUCCEEDED(stream->Stat(&statstg, STATFLAG_NONAME))) {
+                        ULONG size = static_cast<ULONG>(statstg.cbSize.QuadPart);
+                        data.resize(size);
+                        LARGE_INTEGER zero = {};
+                        stream->Seek(zero, STREAM_SEEK_SET, NULL);
+                        ULONG bytesRead = 0;
+                        stream->Read(data.data(), size, &bytesRead);
+                    }
+                }
+                if (callback) {
+                    callback(result, data);
+                }
+                return S_OK;
+            }
+        ).Get());
+    return hr;
 }
 
 bool MyWebViewImpl::canGoBack()

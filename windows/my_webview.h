@@ -43,6 +43,7 @@ public:
 	virtual void enableIsZoomControl(bool bEnable) = 0;
 
 	virtual HRESULT setUserAgent(LPCWSTR userAgent) = 0;
+	virtual HRESULT captureScreenshot(std::function<void(HRESULT, std::vector<uint8_t>)> callback) = 0;
 
 	virtual HRESULT updateBounds(RECT& bounds) = 0;
 	virtual HRESULT getBounds(RECT& bounds) = 0;

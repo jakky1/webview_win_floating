@@ -241,6 +241,16 @@ void WebviewWinFloatingPlugin::HandleMethodCall(
     auto userAgent = std::get<std::string>(arguments[flutter::EncodableValue("userAgent")]);
     HRESULT hr = webview->setUserAgent(toWideString(userAgent));
     result->Success(flutter::EncodableValue(SUCCEEDED(hr) ? true : false));
+  } else if (method_call.method_name().compare("captureScreenshot") == 0) {
+    std::shared_ptr<flutter::MethodResult<flutter::EncodableValue>> shared_result = std::move(result);
+    auto hr = webview->captureScreenshot([shared_result](HRESULT hr, std::vector<uint8_t> data) {
+      if (SUCCEEDED(hr)) {
+        shared_result->Success(flutter::EncodableValue(std::move(data)));
+      } else {
+        shared_result->Error("captureScreenshot() error");
+      }
+    });
+    if (FAILED(hr)) result->Error("captureScreenshot() error");
   } else if (method_call.method_name().compare("canGoBack") == 0) {
     bool allow = webview->canGoBack();
     result->Success(flutter::EncodableValue(allow));

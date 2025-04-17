@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:typed_data';
 
 import 'package:flutter/widgets.dart';
 import 'package:webview_flutter_platform_interface/webview_flutter_platform_interface.dart';
@@ -258,6 +259,11 @@ class WindowsPlatformWebViewController extends PlatformWebViewController {
   @override
   Future<void> setUserAgent(String? userAgent) {
     return controller.setUserAgent(userAgent);
+  }
+
+  @override
+  Future<Uint8List> captureScreenshot() {
+    return controller.captureScreenshot();
   }
 
   @override

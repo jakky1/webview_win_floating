@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'dart:typed_data';
 
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
@@ -88,6 +89,10 @@ abstract class WebviewWinFloatingPlatform extends PlatformInterface {
   }
 
   Future<bool> setUserAgent(int webviewId, String userAgent) {
+    throw UnimplementedError();
+  }
+
+  Future<Uint8List> captureScreenshot(int webviewId) {
     throw UnimplementedError();
   }
 

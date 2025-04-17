@@ -405,6 +405,12 @@ class WinWebViewController {
         .setUserAgent(_webviewId, userAgent);
   }
 
+  Future<Uint8List> captureScreenshot() async {
+    await _initFuture;
+    return await WebviewWinFloatingPlatform.instance
+        .captureScreenshot(_webviewId);
+  }
+
   Future<void> requestFocus() async {
     await _initFuture;
     return await WebviewWinFloatingPlatform.instance.requestFocus(_webviewId);

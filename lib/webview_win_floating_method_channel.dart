@@ -186,6 +186,12 @@ class MethodChannelWebviewWinFloating extends WebviewWinFloatingPlatform {
   }
 
   @override
+  Future<Uint8List> captureScreenshot(int webviewId) async {
+    return await methodChannel.invokeMethod<Uint8List>(
+      'captureScreenshot', {"webviewId": webviewId}) ?? Uint8List(0);
+  }
+
+  @override
   Future<bool> canGoBack(int webviewId) async {
     bool? b = await methodChannel
         .invokeMethod<bool?>('canGoBack', {"webviewId": webviewId});
