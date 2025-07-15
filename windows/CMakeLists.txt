@@ -38,12 +38,17 @@ if(NOT NUGET)
   endif()
 endif()
 
-add_custom_target(${PROJECT_NAME}_DEPENDENCIES_DOWNLOAD ALL)
+set(WEBVIEW_WIN_FLOATING_STAMP_FILE ${CMAKE_BINARY_DIR}/webview_win_floating_download.stamp)
 add_custom_command(
-  TARGET ${PROJECT_NAME}_DEPENDENCIES_DOWNLOAD PRE_BUILD
+  OUTPUT ${WEBVIEW_WIN_FLOATING_STAMP_FILE}
   COMMAND ${NUGET} install Microsoft.Windows.ImplementationLibrary -Version ${WIL_VERSION} -ExcludeVersion -OutputDirectory ${CMAKE_BINARY_DIR}/packages
   COMMAND ${NUGET} install Microsoft.Web.WebView2 -Version ${WEBVIEW_VERSION} -ExcludeVersion -OutputDirectory ${CMAKE_BINARY_DIR}/packages
+  COMMAND ${CMAKE_COMMAND} -E touch ${WEBVIEW_WIN_FLOATING_STAMP_FILE}
   DEPENDS ${NUGET}
+  VERBATIM
+)
+add_custom_target(${PROJECT_NAME}_DEPENDENCIES_DOWNLOAD ALL
+  DEPENDS ${WEBVIEW_WIN_FLOATING_STAMP_FILE}
 )
 ######## Jacky }
 
