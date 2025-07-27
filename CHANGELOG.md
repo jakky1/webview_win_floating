@@ -1,3 +1,7 @@
+## 2.3.2
+
+* Fix: compile warning 'Policy CMP0175 is not set'.
+
 ## 2.3.1
 
 * Feature: implement Permission request

@@ -49,17 +49,6 @@ dependencies:
   webview_flutter: ^4.0.1
 ```
 
-Or
-
-```yaml
-dependencies:
-  webview_win_floating:
-    git:
-      url: https://github.com/jakky1/webview_win_floating.git
-      ref: master
-  webview_flutter: ^4.0.1
-```
-
 # Problem shootting for building fail
 
 If you build fail with this package, and the error message has the keyword "**MSB3073**":
