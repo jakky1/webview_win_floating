@@ -124,6 +124,8 @@ class _WinWebViewWidgetState extends State<WinWebViewWidget> {
     super.activate();
     if (widget.controller.params.suspendDuringDeactive) {
       widget.controller._resume();
+    } else {
+      widget.controller._setVisibility(true);
     }
   }
 
@@ -132,6 +134,8 @@ class _WinWebViewWidgetState extends State<WinWebViewWidget> {
     super.deactivate();
     if (widget.controller.params.suspendDuringDeactive) {
       widget.controller._suspend();
+    } else {
+      widget.controller._setVisibility(false);
     }
   }
 
