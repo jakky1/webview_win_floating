@@ -113,9 +113,11 @@ class WindowsPlatformWebViewWidget extends PlatformWebViewWidget {
 class WindowsPlatformWebViewControllerCreationParams
     extends PlatformWebViewControllerCreationParams {
   final String? userDataFolder;
+  final bool suspendDuringDeactive;
 
   /// Creates a new [WindowsPlatformWebViewControllerCreationParams] instance.
-  const WindowsPlatformWebViewControllerCreationParams({this.userDataFolder})
+  const WindowsPlatformWebViewControllerCreationParams(
+      {this.userDataFolder, this.suspendDuringDeactive = true})
       : super();
 
   /// Creates a [WindowsPlatformWebViewControllerCreationParams] instance based on [PlatformWebViewControllerCreationParams].
@@ -134,10 +136,13 @@ class WindowsPlatformWebViewController extends PlatformWebViewController {
       PlatformWebViewControllerCreationParams params)
       : super.implementation(params) {
     String? userDataFolder;
+    var ps = const WindowsPlatformWebViewControllerCreationParams();
     if (params is WindowsPlatformWebViewControllerCreationParams) {
       userDataFolder = params.userDataFolder;
+      ps = params;
     }
-    controller = WinWebViewController(userDataFolder: userDataFolder);
+    controller =
+        WinWebViewController(userDataFolder: userDataFolder, params: ps);
   }
 
   @override

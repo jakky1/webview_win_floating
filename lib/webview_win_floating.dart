@@ -8,6 +8,7 @@ import 'dart:typed_data';
 import 'package:flutter/widgets.dart';
 import 'package:fullscreen_window/fullscreen_window.dart';
 import 'package:webview_flutter_platform_interface/webview_flutter_platform_interface.dart';
+import 'package:webview_win_floating/webview_plugin.dart';
 
 import 'layout_notify_widget.dart';
 import 'webview_win_floating_platform_interface.dart';
@@ -121,13 +122,17 @@ class _WinWebViewWidgetState extends State<WinWebViewWidget> {
   @override
   void activate() {
     super.activate();
-    widget.controller._resume();
+    if (widget.controller.params.suspendDuringDeactive) {
+      widget.controller._resume();
+    }
   }
 
   @override
   void deactivate() {
     super.deactivate();
-    widget.controller._suspend();
+    if (widget.controller.params.suspendDuringDeactive) {
+      widget.controller._suspend();
+    }
   }
 
   @override
@@ -167,6 +172,7 @@ class WinWebViewController {
   String? _currentUrl;
   String? _currentTitle;
   Color? _backgroundColor;
+  final WindowsPlatformWebViewControllerCreationParams params;
   void Function(WinWebViewPermissionRequest request)? _onPermissionRequest;
 
   static final Finalizer<int> _finalizer = Finalizer((id) {
@@ -176,11 +182,14 @@ class WinWebViewController {
 
   WinWebViewController(
       {String? userDataFolder,
+      this.params = const WindowsPlatformWebViewControllerCreationParams(),
       void Function(WinWebViewPermissionRequest request)?
           onPermissionRequest}) {
     _onPermissionRequest = onPermissionRequest;
     _finalizer.attach(this, _webviewId, detach: this);
     WebviewWinFloatingPlatform.instance.registerWebView(_webviewId, this);
+
+    if (params.userDataFolder != null) userDataFolder = params.userDataFolder;
     _initFuture = WebviewWinFloatingPlatform.instance
         .create(_webviewId, initialUrl: null, userDataFolder: userDataFolder);
   }
