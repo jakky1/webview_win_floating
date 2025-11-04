@@ -35,18 +35,27 @@ abstract class WebviewWinFloatingPlatform extends PlatformInterface {
     throw UnimplementedError();
   }
 
-  Future<bool> create(int webviewId,
-      {String? initialUrl, String? userDataFolder}) {
+  Future<bool> create(
+    int webviewId, {
+    String? initialUrl,
+    String? userDataFolder,
+  }) {
     throw UnimplementedError();
   }
 
   Future<void> setHasNavigationDecision(
-      int webviewId, bool hasNavigationDecision) {
+    int webviewId,
+    bool hasNavigationDecision,
+  ) {
     throw UnimplementedError();
   }
 
   Future<void> updateBounds(
-      int webviewId, Offset offset, Size size, double devicePixelRatio) {
+    int webviewId,
+    Offset offset,
+    Size size,
+    double devicePixelRatio,
+  ) {
     throw UnimplementedError();
   }
 
@@ -63,7 +72,9 @@ abstract class WebviewWinFloatingPlatform extends PlatformInterface {
   }
 
   Future<String> runJavaScriptReturningResult(
-      int webviewId, String javaScriptString) {
+    int webviewId,
+    String javaScriptString,
+  ) {
     throw UnimplementedError();
   }
 

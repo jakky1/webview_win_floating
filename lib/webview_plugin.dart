@@ -50,12 +50,13 @@ class WindowsPlatformNavigationDelegate extends PlatformNavigationDelegate {
   WebResourceErrorCallback? onWebResourceError;
 
   WindowsPlatformNavigationDelegate(
-      PlatformNavigationDelegateCreationParams params)
-      : super.implementation(params);
+    PlatformNavigationDelegateCreationParams params,
+  ) : super.implementation(params);
 
   @override
   Future<void> setOnNavigationRequest(
-      NavigationRequestCallback onNavigationRequest) async {
+    NavigationRequestCallback onNavigationRequest,
+  ) async {
     this.onNavigationRequest = onNavigationRequest;
   }
 
@@ -76,7 +77,8 @@ class WindowsPlatformNavigationDelegate extends PlatformNavigationDelegate {
 
   @override
   Future<void> setOnWebResourceError(
-      WebResourceErrorCallback onWebResourceError) async {
+    WebResourceErrorCallback onWebResourceError,
+  ) async {
     this.onWebResourceError = onWebResourceError;
   }
 }
@@ -96,7 +98,7 @@ class WindowsPlatformWebViewWidgetCreationParams
 
 class WindowsPlatformWebViewWidget extends PlatformWebViewWidget {
   WindowsPlatformWebViewWidget(PlatformWebViewWidgetCreationParams params)
-      : super.implementation(params);
+    : super.implementation(params);
 
   @override
   Widget build(BuildContext context) {
@@ -116,15 +118,17 @@ class WindowsPlatformWebViewControllerCreationParams
   final bool suspendDuringDeactive;
 
   /// Creates a new [WindowsPlatformWebViewControllerCreationParams] instance.
-  const WindowsPlatformWebViewControllerCreationParams(
-      {this.userDataFolder, this.suspendDuringDeactive = true})
-      : super();
+  const WindowsPlatformWebViewControllerCreationParams({
+    this.userDataFolder,
+    this.suspendDuringDeactive = true,
+  }) : super();
 
   /// Creates a [WindowsPlatformWebViewControllerCreationParams] instance based on [PlatformWebViewControllerCreationParams].
   factory WindowsPlatformWebViewControllerCreationParams.fromPlatformWebViewControllerCreationParams(
-      // Recommended placeholder to prevent being broken by platform interface.
-      // ignore: avoid_unused_constructor_parameters
-      PlatformWebViewControllerCreationParams params) {
+    // Recommended placeholder to prevent being broken by platform interface.
+    // ignore: avoid_unused_constructor_parameters
+    PlatformWebViewControllerCreationParams params,
+  ) {
     return const WindowsPlatformWebViewControllerCreationParams();
   }
 }
@@ -133,28 +137,33 @@ class WindowsPlatformWebViewController extends PlatformWebViewController {
   late final WinWebViewController controller;
 
   WindowsPlatformWebViewController(
-      PlatformWebViewControllerCreationParams params)
-      : super.implementation(params) {
+    PlatformWebViewControllerCreationParams params,
+  ) : super.implementation(params) {
     String? userDataFolder;
     var ps = const WindowsPlatformWebViewControllerCreationParams();
     if (params is WindowsPlatformWebViewControllerCreationParams) {
       userDataFolder = params.userDataFolder;
       ps = params;
     }
-    controller =
-        WinWebViewController(userDataFolder: userDataFolder, params: ps);
+    controller = WinWebViewController(
+      userDataFolder: userDataFolder,
+      params: ps,
+    );
   }
 
   @override
   Future<void> setPlatformNavigationDelegate(
-      PlatformNavigationDelegate handler) async {
+    PlatformNavigationDelegate handler,
+  ) async {
     var delegate = handler as WindowsPlatformNavigationDelegate;
-    controller.setNavigationDelegate(WinNavigationDelegate(
-      onNavigationRequest: delegate.onNavigationRequest,
-      onPageStarted: delegate.onPageStarted,
-      onPageFinished: delegate.onPageFinished,
-      onWebResourceError: delegate.onWebResourceError,
-    ));
+    controller.setNavigationDelegate(
+      WinNavigationDelegate(
+        onNavigationRequest: delegate.onNavigationRequest,
+        onPageStarted: delegate.onPageStarted,
+        onPageFinished: delegate.onPageFinished,
+        onWebResourceError: delegate.onWebResourceError,
+      ),
+    );
   }
 
   @override
@@ -164,9 +173,12 @@ class WindowsPlatformWebViewController extends PlatformWebViewController {
 
   @override
   Future<void> addJavaScriptChannel(
-      JavaScriptChannelParams javaScriptChannelParams) async {
-    controller.addJavaScriptChannel(javaScriptChannelParams.name,
-        onMessageReceived: javaScriptChannelParams.onMessageReceived);
+    JavaScriptChannelParams javaScriptChannelParams,
+  ) async {
+    controller.addJavaScriptChannel(
+      javaScriptChannelParams.name,
+      onMessageReceived: javaScriptChannelParams.onMessageReceived,
+    );
   }
 
   @override
@@ -234,15 +246,21 @@ class WindowsPlatformWebViewController extends PlatformWebViewController {
   @override
   Future<void> loadHtmlString(String html, {String? baseUrl}) {
     if (baseUrl != null) {
-      log("[webview_win_floating] baseUrl in loadHtmlString() is not support in Windows WebView");
+      log(
+        "[webview_win_floating] baseUrl in loadHtmlString() is not support in Windows WebView",
+      );
     }
     return controller.loadHtmlString(html);
   }
 
   @override
   Future<void> loadRequest(LoadRequestParams params) {
-    return controller.loadRequest(params.uri,
-        method: params.method, headers: params.headers, body: params.body);
+    return controller.loadRequest(
+      params.uri,
+      method: params.method,
+      headers: params.headers,
+      body: params.body,
+    );
   }
 
   @override
@@ -317,19 +335,22 @@ class WindowsPlatformWebViewCookieManagerCreationParams
   ) : super();
 
   factory WindowsPlatformWebViewCookieManagerCreationParams.fromPlatformWebViewCookieManagerCreationParams(
-      PlatformWebViewCookieManagerCreationParams params) {
+    PlatformWebViewCookieManagerCreationParams params,
+  ) {
     return WindowsPlatformWebViewCookieManagerCreationParams._(params);
   }
 }
 
 class WindowsPlatformWebViewCookieManager extends PlatformWebViewCookieManager {
   WindowsPlatformWebViewCookieManager(
-      PlatformWebViewCookieManagerCreationParams params)
-      : super.implementation(params);
+    PlatformWebViewCookieManagerCreationParams params,
+  ) : super.implementation(params);
 
   @override
   Future<bool> clearCookies() async {
-    log("[webview_win_floating] clearCookies() not support. try controller.clearCache() instead");
+    log(
+      "[webview_win_floating] clearCookies() not support. try controller.clearCache() instead",
+    );
     return false;
   }
 
