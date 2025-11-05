@@ -233,8 +233,8 @@ If your app only runs on Windows, and you want to remove library dependencies as
 
 ```yaml
 dependencies:
-  webview_win_floating: ^1.0.0
-  # webview_flutter: ^4.0.1  # mark this line for Windows only app
+  webview_win_floating: ^3.0.0
+  # webview_flutter: ^4.13.0  # mark this line for Windows only app
 ```
 
 and modify all the following class name in your code:
