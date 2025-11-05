@@ -51,7 +51,7 @@ So, only use this package when:
 
 ## For Linux platform
 
-Refer to this link to learn about the important considerations when building app.
+Refer to [this link](https://github.com/jakky1/webview_win_floating/blob/master/README_Linux.md) to learn about the important considerations when building app.
 
 ## Installation
 
