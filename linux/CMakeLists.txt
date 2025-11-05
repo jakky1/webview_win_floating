@@ -39,7 +39,7 @@ target_compile_definitions(${PLUGIN_NAME} PRIVATE FLUTTER_PLUGIN_IMPL)
 
 
 # Jacky {
-pkg_search_module(WebKit REQUIRED webkit2gtk-4.1 webkit2gtk-4.0 webkit2gtk-4.2 webkit2gtk-4.3)
+pkg_search_module(WebKit REQUIRED webkit2gtk-4.1 webkit2gtk-4.2 webkit2gtk-4.3)
 message(NOTICE "[webview_win_floating] webkit2gtk library found: ${WebKit_MODULE_NAME}")
 include_directories(${WebKit_INCLUDE_DIRS})
 # Jacky }
