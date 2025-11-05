@@ -1,3 +1,11 @@
+## 3.0.0
+
+* Support Linux platform.
+
+* Implement: NavigationDelegate.onUrlChange()
+* Implement: NavigationDelegate.onHttpError()
+* Implement: NavigationDelegate.onSslAuthError()
+
 ## 2.3.2
 
 * Fix: compile warning 'Policy CMP0175 is not set'.
