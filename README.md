@@ -1,43 +1,57 @@
 # webview_win_floating
 
-[visits-count-image]: https://img.shields.io/badge/dynamic/json?label=Visits%20Count&query=value&url=https://api.countapi.xyz/hit/jakky1_webview_win_floating/visits
-
-Flutter webView for Windows.
+Flutter webView for Windows / Linux.
 It's also a plugin that implements the interface of [webview_flutter][1].
 
 ![](https://raw.githubusercontent.com/jakky1/webview_win_floating/master/screenshot.jpg)
 
 ## Platform Support
 
-This package itself support only Windows.
+| Platform | Support | Use Library
+| :-----: | :-----: | :-----: |
+| Windows | &#x2705; | [WebView2](https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2?view=webview2-1.0.3537.50) |
+|    Linux  |    &#x2705;   | [webkit2gtk-4.1](https://webkitgtk.org/reference/webkit2gtk/2.38.4/) |
 
-But use it with [webview_flutter][1], you can write once then support Windows / Android / iOS at the same time.
+You can call API of [webview_flutter](https://pub.dev/packages/webview_flutter) to use this package.
 
-Android / iOS webview is supported by [webview_flutter][1]
+Meaning your app can run seamlessly across `ALL platforms`.
+
 
 ## Features & Limitations
 
-This package place a native Windows WebView2 component on the window, no texture involved.
+This package place a native webview component on top of the window, no texture involved. That's why it called "floating", so:
+```
+On Windows / Linux, 
+all Flutter widgets cannot be displayed above the webview.
+```
 
-That's why it called "floating". In Windows, Flutter widgets cannot show on top of the webview.
+However, since it is a native WebView component, without texture involved, so:
+```
+the webview runs smoothly at a high fps, just the same with a native WebView, especially during playing video or scrolling.
+```
 
-However, since it is a native WebView2 component, without texture involved, the display speed is the same with native WebView2.
-
-Feature:
-- fast display speed  (no texture)
+Features:
+- runs smooth at a high fps
 - support fullscreen
-- support cross-platform (Windows / Android / iOS)
+- support all platforms (with package `webview_flutter`)
 
-Limitations: (only in Windows)
-- all the Flutter widgets cannot show on top of the webview
+Limitations: (only in Windows / Linux)
+- all the Flutter widgets cannot be displayed on top of the webview
 - cannot push a new route on top of the webview
-- focus switch between webview and flutter widgets (via Tab key) is not support (only in Windows)
+- There are some limitation switching focus  between webview and flutter widgets via Tab key.
 - The webview can be put in a scrollable widget, but you may need to assign a ScrollController to the scrollable widget (to enable reposition the webview when scrolling).
 - The webview cannot be clipped by Flutter. So if the webview is put in a scrollable, and the webview is outside of the scrollable, the webview is still visible. (However, if the scrollable is filled with the window size, then this issue can be ignored)
 
 Hmm... there are so many limitations.
 
-So try this package only if the limitations mentioned above is not a concern for you, or your app really need cross-platform, or other packages cannot satisfy your requirement (ex. cannot build pass, text blur, low display fps, large ~200MB dll size, security issue when cannot updating the webview core, etc).
+So, only use this package when:
+- need to play videos smoothly 
+- need a fluid scrolling experience
+- if you don't mind the issue of widgets not being able to display above the webview
+
+## For Linux platform
+
+Refer to this link to learn about the important considerations when building app.
 
 ## Installation
 
@@ -45,8 +59,8 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  webview_win_floating: ^1.0.0
-  webview_flutter: ^4.0.1
+  webview_win_floating: ^3.0.0
+  webview_flutter: ^4.13.0
 ```
 
 # Problem shootting for building fail
@@ -199,17 +213,10 @@ enum WinWebViewPermissionResourceType {
 
 ## set user data folder
 
-For `WebViewController`:
 ```dart
 String cacheDir = "c:\\test";
-var params = WindowsPlatformWebViewControllerCreationParams(
-    userDataFolder: cacheDir);
+var params = WindowsWebViewControllerCreationParams(userDataFolder: cacheDir);
 var controller = WebViewController.fromPlatformCreationParams(params);
-```
-
-For `WinWebViewController`:
-```dart
-final controller = WinWebViewController(userDataFolder: "c:\\cache_webview");
 ```
 
 ## Build with InnoSetup
@@ -254,8 +261,9 @@ final controller = WinWebViewController(onPermissionRequest: (req) {
 ```
 
 There are some Windows-only API:
-* controller.openDevTools()
+* onPageTitleChanged` callback in WinNavigationDelegate
 * onHistoryChanged` callback in WinNavigationDelegate
+* controller.openDevTools()
 * controller.dispose()
 * controller.setStatusBar(bool isEnable): show/hide [status bar](https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2settings.isstatusbarenabled)
 
@@ -304,8 +312,23 @@ class _MyAppState extends State<MyApp> {
       },
       onPageStarted: (url) => print("onPageStarted: $url"),
       onPageFinished: (url) => print("onPageFinished: $url"),
-      onWebResourceError: (error) =>
-          print("onWebResourceError: ${error.description}"),
+      onUrlChange: (change) {
+        String url = change.url ?? "";
+        print("onUrlChange: $url"),
+      },
+      onHttpError: (error) {
+        int httpCode = error.response!.statusCode; // e.g. 403 (Not Found)
+        String url = error.response!.uri.toString();
+        print("onHttpError: code=$httpCode, url : $url");
+      },
+      onSslAuthError: (error) {
+        if (error is WinSslAuthError) {
+          print("onSslAuthError: ${(error as WinSslAuthError).url}");
+        } else {
+          print("onSslAuthError: unknown url}");
+        }
+        error.cancel();
+      },
     ));
     controller.loadRequest(Uri.parse("https://www.google.com/"));
   }
