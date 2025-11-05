@@ -3,6 +3,7 @@ export 'webview_plugin.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/widgets.dart';
@@ -17,9 +18,12 @@ class WinNavigationDelegate {
   final NavigationRequestCallback? onNavigationRequest;
   final PageEventCallback? onPageStarted;
   final PageEventCallback? onPageFinished;
+  final HttpResponseErrorCallback? onHttpError;
+  final SslAuthErrorCallback? onSslAuthError;
   final ProgressCallback? onProgress;
   final WebResourceErrorCallback? onWebResourceError;
 
+  final UrlChangedCallback? onUrlChange;
   final PageTitleChangedCallback? onPageTitleChanged;
   final FullScreenChangedCallback? onFullScreenChanged;
   final HistoryChangedCallback? onHistoryChanged;
@@ -28,8 +32,11 @@ class WinNavigationDelegate {
     this.onNavigationRequest,
     this.onPageStarted,
     this.onPageFinished,
+    this.onHttpError,
+    this.onSslAuthError,
     this.onProgress,
     this.onWebResourceError,
+    this.onUrlChange,
     this.onPageTitleChanged,
     this.onFullScreenChanged,
     this.onHistoryChanged,
@@ -43,6 +50,7 @@ class WinWebViewPermissionRequest extends PlatformWebViewPermissionRequest {
   final String url;
   final WinWebViewPermissionResourceType kind;
   bool _isDone = false;
+  late final PlatformWebViewPermissionRequest platform = this;
 
   WinWebViewPermissionRequest._(
     this._controller,
@@ -50,17 +58,17 @@ class WinWebViewPermissionRequest extends PlatformWebViewPermissionRequest {
     this.url,
     this.kind,
   ) : super(
-        types: {
-          WebViewPermissionResourceType.camera,
-          WebViewPermissionResourceType.microphone,
-        },
-      );
+          types: {
+            WebViewPermissionResourceType.camera,
+            WebViewPermissionResourceType.microphone,
+          },
+        );
 
   @override
   Future<void> grant() async {
     if (_isDone) {
       print(
-        "WinWebViewPermissionRequest: already called grant() or deny() before. ignored",
+        "[webview_win_floating] WinWebViewPermissionRequest: already called grant() or deny() before. ignored",
       );
       return;
     }
@@ -73,13 +81,38 @@ class WinWebViewPermissionRequest extends PlatformWebViewPermissionRequest {
   Future<void> deny() async {
     if (_isDone) {
       print(
-        "WinWebViewPermissionRequest: already called grant() or deny() before. ignored",
+        "[webview_win_floating] WinWebViewPermissionRequest: already called grant() or deny() before. ignored",
       );
       return;
     }
 
     _controller.grantPermission(_deferralId, false);
     _isDone = true;
+  }
+
+  Future<void> denyIfNoAction() async {
+    if (_isDone) return;
+    print(
+        "[webview_win_floating] onPermissionRequest() doesn't call grant() or deny()!");
+    _controller.grantPermission(_deferralId, false);
+    _isDone = true;
+  }
+}
+
+class WinSslAuthError extends PlatformSslAuthError {
+  final String url;
+  WinSslAuthError(
+      {required this.url,
+      required super.certificate,
+      required super.description});
+
+  @override
+  Future<void> cancel() async {}
+
+  @override
+  Future<void> proceed() async {
+    print(
+        "[webview_win_floating] onSslAuthError(): WinSslAuthError.proceed() do nothing. Always skip websites with ssl auth error");
   }
 }
 
@@ -93,23 +126,24 @@ enum WinWebViewPermissionResourceType {
   clipboardRead,
 } //mapping to COREWEBVIEW2_PERMISSION_KIND
 
-typedef WebViewCreatedCallback =
-    void Function(WinWebViewController webViewController);
+typedef WebViewCreatedCallback = void Function(
+    WinWebViewController webViewController);
 typedef PageStartedCallback = void Function(String url);
 typedef PageFinishedCallback = void Function(String url);
+typedef UrlChangedCallback = void Function(UrlChange url);
 typedef PageTitleChangedCallback = void Function(String title);
 typedef JavaScriptMessageCallback = void Function(JavaScriptMessage message);
 typedef FullScreenChangedCallback = void Function(bool isFullScreen);
 typedef MoveFocusRequestCallback = void Function(bool isNext);
 typedef HistoryChangedCallback = void Function();
-typedef AskPermissionCallback =
-    bool Function(String url, WinWebViewPermissionResourceType kind);
+typedef AskPermissionCallback = bool Function(
+    String url, WinWebViewPermissionResourceType kind);
 
 class WinWebViewWidget extends StatefulWidget {
   final WinWebViewController controller;
 
   const WinWebViewWidget({Key? key, required this.controller})
-    : super(key: key);
+      : super(key: key);
 
   @override
   State<StatefulWidget> createState() => _WinWebViewWidgetState();
@@ -181,7 +215,7 @@ class WinWebViewController {
   String? _currentUrl;
   String? _currentTitle;
   Color? _backgroundColor;
-  final WindowsPlatformWebViewControllerCreationParams params;
+  late final WindowsWebViewControllerCreationParams params;
   void Function(WinWebViewPermissionRequest request)? _onPermissionRequest;
 
   static final Finalizer<int> _finalizer = Finalizer((id) {
@@ -189,20 +223,34 @@ class WinWebViewController {
     _disposeById(id);
   });
 
+  factory WinWebViewController.fromPlatformCreationParams(
+      PlatformWebViewControllerCreationParams params,
+      {void Function(WinWebViewPermissionRequest request)?
+          onPermissionRequest}) {
+    return WinWebViewController(
+        params: params, onPermissionRequest: onPermissionRequest);
+  }
+
   WinWebViewController({
-    String? userDataFolder,
-    this.params = const WindowsPlatformWebViewControllerCreationParams(),
+    PlatformWebViewControllerCreationParams params =
+        const WindowsWebViewControllerCreationParams(),
     void Function(WinWebViewPermissionRequest request)? onPermissionRequest,
   }) {
     _onPermissionRequest = onPermissionRequest;
     _finalizer.attach(this, _webviewId, detach: this);
     WebviewWinFloatingPlatform.instance.registerWebView(_webviewId, this);
 
-    if (params.userDataFolder != null) userDataFolder = params.userDataFolder;
+    if (params is WindowsWebViewControllerCreationParams) {
+      this.params = params;
+    } else {
+      log("[webview_win_floating] variable 'params' is not a 'WindowsWebViewControllerCreationParams' object. type: ${params.runtimeType}");
+      this.params = WindowsWebViewControllerCreationParams();
+    }
+
     _initFuture = WebviewWinFloatingPlatform.instance.create(
       _webviewId,
       initialUrl: null,
-      userDataFolder: userDataFolder,
+      userDataFolder: this.params.userDataFolder,
     );
   }
 
@@ -254,9 +302,8 @@ class WinWebViewController {
     }
   }
 
-  void notifyMessageReceived_(String message) {
+  void notifyMessageReceived_(dynamic jobj) {
     //print("notifyMessageReceived_: $message");
-    final jobj = json.decode(message);
     var channelName = jobj["JkChannelName"];
     if (channelName != null) {
       String jStr = jobj["msg"];
@@ -268,45 +315,59 @@ class WinWebViewController {
     }
   }
 
-  void notifyOnPageStarted_(
+  void notifyOnNavigationRequest_(
+    int requestId,
     String url,
     bool isNewWindow,
-    bool isUserInitiated,
   ) async {
-    // isUserInitiated==true when user click a link
-    // isUserInitiated==false when loadRequest() called
-    // NOTE: in [webview_flutter], every time user click a url will cancel it first,
-    //       and ask client by onNavigationRequest().
-    //       if client returns cancel, then do nothing
-    //       if client returns yes, then call loadUrl(url)
-
-    if (isUserInitiated && _navigationDelegate.onNavigationRequest != null) {
-      NavigationDecision decision = NavigationDecision.navigate;
-      decision = await _navigationDelegate.onNavigationRequest!(
+    bool isAllowed = true;
+    if (_navigationDelegate.onNavigationRequest != null) {
+      var decision = await _navigationDelegate.onNavigationRequest!(
         NavigationRequest(url: url, isMainFrame: !isNewWindow),
       );
-      bool isAllowed = (decision == NavigationDecision.navigate);
-      if (isAllowed) loadRequest_(url);
-      return;
+      isAllowed = (decision == NavigationDecision.navigate);
     }
 
-    _currentUrl = url;
+    await WebviewWinFloatingPlatform.instance.allowNavigationRequest(
+      _webviewId,
+      requestId,
+      isAllowed,
+    );
+  }
+
+  void notifyOnPageStarted_(String url) async {
     if (_navigationDelegate.onPageStarted != null) {
       _navigationDelegate.onPageStarted!(url);
     }
   }
 
-  void notifyOnPageFinished_(String url, int errCode) {
-    if (errCode == 0) {
-      if (_navigationDelegate.onPageFinished != null) {
-        _navigationDelegate.onPageFinished!(url);
-      }
-    } else {
-      if (_navigationDelegate.onWebResourceError != null) {
-        var err = WebResourceError(errorCode: errCode, description: "");
-        _navigationDelegate.onWebResourceError!(err);
-      }
+  void notifyOnPageFinished_(String url) {
+    if (_navigationDelegate.onPageFinished != null) {
+      _navigationDelegate.onPageFinished!(url);
     }
+  }
+
+  void notifyOnHttpError_(String url, int errorCode) {
+    if (_navigationDelegate.onPageFinished != null) {
+      var uri = Uri.parse(url);
+      var request = WebResourceRequest(uri: uri);
+      var response = WebResourceResponse(uri: uri, statusCode: errorCode);
+      var error = HttpResponseError(request: request, response: response);
+      _navigationDelegate.onHttpError!(error);
+    }
+  }
+
+  void notifyOnSslAuthError_(String url) {
+    if (_navigationDelegate.onSslAuthError != null) {
+      var error = WinSslAuthError(url: url, certificate: null, description: "");
+      _navigationDelegate.onSslAuthError!(error);
+    }
+  }
+
+  void notifyOnUrlChange_(String url) {
+    _currentUrl = url;
+    if (_navigationDelegate.onUrlChange == null) return;
+    _navigationDelegate.onUrlChange!(UrlChange(url: url));
   }
 
   void notifyOnPageTitleChanged_(String title) {
@@ -348,6 +409,7 @@ class WinWebViewController {
     if (_onPermissionRequest != null) {
       var req = WinWebViewPermissionRequest._(this, deferralId, url, kind);
       _onPermissionRequest!(req);
+      req.denyIfNoAction();
     } else {
       // if user not listen to permission request, always deny
       grantPermission(deferralId, false);
@@ -430,9 +492,10 @@ class WinWebViewController {
     await WebviewWinFloatingPlatform.instance.loadUrl(_webviewId, url);
   }
 
-  Future<void> loadHtmlString(String html) async {
+  Future<void> loadHtmlString(String html, {String? baseUrl}) async {
     await _initFuture;
-    await WebviewWinFloatingPlatform.instance.loadHtmlString(_webviewId, html);
+    await WebviewWinFloatingPlatform.instance
+        .loadHtmlString(_webviewId, html, baseUrl);
   }
 
   Future<void> runJavaScript(String javaScriptString) async {

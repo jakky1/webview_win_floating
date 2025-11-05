@@ -47,7 +47,11 @@ class WindowsPlatformNavigationDelegate extends PlatformNavigationDelegate {
   NavigationRequestCallback? onNavigationRequest;
   PageEventCallback? onPageStarted;
   PageEventCallback? onPageFinished;
+
+  HttpResponseErrorCallback? onHttpError;
+  SslAuthErrorCallback? onSslAuthError;
   WebResourceErrorCallback? onWebResourceError;
+  UrlChangedCallback? onUrlChange;
 
   WindowsPlatformNavigationDelegate(
     PlatformNavigationDelegateCreationParams params,
@@ -76,10 +80,25 @@ class WindowsPlatformNavigationDelegate extends PlatformNavigationDelegate {
   }
 
   @override
+  Future<void> setOnHttpError(HttpResponseErrorCallback onHttpError) async {
+    this.onHttpError = onHttpError;
+  }
+
+  @override
+  Future<void> setOnSSlAuthError(SslAuthErrorCallback onSslAuthError) async {
+    this.onSslAuthError = onSslAuthError;
+  }
+
+  @override
   Future<void> setOnWebResourceError(
     WebResourceErrorCallback onWebResourceError,
   ) async {
     this.onWebResourceError = onWebResourceError;
+  }
+
+  @override
+  Future<void> setOnUrlChange(UrlChangeCallback onUrlChange) async {
+    this.onUrlChange = onUrlChange;
   }
 }
 
@@ -98,7 +117,7 @@ class WindowsPlatformWebViewWidgetCreationParams
 
 class WindowsPlatformWebViewWidget extends PlatformWebViewWidget {
   WindowsPlatformWebViewWidget(PlatformWebViewWidgetCreationParams params)
-    : super.implementation(params);
+      : super.implementation(params);
 
   @override
   Widget build(BuildContext context) {
@@ -111,25 +130,28 @@ class WindowsPlatformWebViewWidget extends PlatformWebViewWidget {
 // controller
 // --------------------------------------------------------------------------
 
+typedef WindowsPlatformWebViewControllerCreationParams // legacy name
+    = WindowsWebViewControllerCreationParams;
+
 @immutable
-class WindowsPlatformWebViewControllerCreationParams
+class WindowsWebViewControllerCreationParams
     extends PlatformWebViewControllerCreationParams {
   final String? userDataFolder;
   final bool suspendDuringDeactive;
 
   /// Creates a new [WindowsPlatformWebViewControllerCreationParams] instance.
-  const WindowsPlatformWebViewControllerCreationParams({
+  const WindowsWebViewControllerCreationParams({
     this.userDataFolder,
     this.suspendDuringDeactive = true,
   }) : super();
 
   /// Creates a [WindowsPlatformWebViewControllerCreationParams] instance based on [PlatformWebViewControllerCreationParams].
-  factory WindowsPlatformWebViewControllerCreationParams.fromPlatformWebViewControllerCreationParams(
+  factory WindowsWebViewControllerCreationParams.fromPlatformWebViewControllerCreationParams(
     // Recommended placeholder to prevent being broken by platform interface.
     // ignore: avoid_unused_constructor_parameters
     PlatformWebViewControllerCreationParams params,
   ) {
-    return const WindowsPlatformWebViewControllerCreationParams();
+    return params as WindowsWebViewControllerCreationParams;
   }
 }
 
@@ -139,16 +161,7 @@ class WindowsPlatformWebViewController extends PlatformWebViewController {
   WindowsPlatformWebViewController(
     PlatformWebViewControllerCreationParams params,
   ) : super.implementation(params) {
-    String? userDataFolder;
-    var ps = const WindowsPlatformWebViewControllerCreationParams();
-    if (params is WindowsPlatformWebViewControllerCreationParams) {
-      userDataFolder = params.userDataFolder;
-      ps = params;
-    }
-    controller = WinWebViewController(
-      userDataFolder: userDataFolder,
-      params: ps,
-    );
+    controller = WinWebViewController(params: params);
   }
 
   @override
@@ -161,7 +174,10 @@ class WindowsPlatformWebViewController extends PlatformWebViewController {
         onNavigationRequest: delegate.onNavigationRequest,
         onPageStarted: delegate.onPageStarted,
         onPageFinished: delegate.onPageFinished,
+        onHttpError: delegate.onHttpError,
+        onSslAuthError: delegate.onSslAuthError,
         onWebResourceError: delegate.onWebResourceError,
+        onUrlChange: delegate.onUrlChange,
       ),
     );
   }
@@ -245,12 +261,7 @@ class WindowsPlatformWebViewController extends PlatformWebViewController {
 
   @override
   Future<void> loadHtmlString(String html, {String? baseUrl}) {
-    if (baseUrl != null) {
-      log(
-        "[webview_win_floating] baseUrl in loadHtmlString() is not support in Windows WebView",
-      );
-    }
-    return controller.loadHtmlString(html);
+    return controller.loadHtmlString(html, baseUrl: baseUrl);
   }
 
   @override
@@ -342,9 +353,7 @@ class WindowsPlatformWebViewCookieManagerCreationParams
 }
 
 class WindowsPlatformWebViewCookieManager extends PlatformWebViewCookieManager {
-  WindowsPlatformWebViewCookieManager(
-    PlatformWebViewCookieManagerCreationParams params,
-  ) : super.implementation(params);
+  WindowsPlatformWebViewCookieManager(super.params) : super.implementation();
 
   @override
   Future<bool> clearCookies() async {

@@ -64,13 +64,135 @@ WebviewWinFloatingPlugin::WebviewWinFloatingPlugin() {}
 
 WebviewWinFloatingPlugin::~WebviewWinFloatingPlugin() {}
 
+void createWebview(const flutter::MethodCall<flutter::EncodableValue> &method_call,
+    std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> &result,
+    int webviewId, std::string url, std::string userDataFolder) {
+
+  std::shared_ptr<flutter::MethodResult<flutter::EncodableValue>> shared_result = std::move(result);
+  MyWebViewCreateParams params;
+
+  params.onCreated = [shared_result, webviewId, url](HRESULT hr, MyWebView *webview) -> void {
+    if (webview != NULL) {
+      webviewMap[webviewId] = webview;
+      std::cout << "[webview] native create: id = " << webviewId << std::endl;
+      if (!url.empty()) webview->loadUrl(toWideString(url));
+      shared_result->Success(flutter::EncodableValue(true));
+    } else {
+      std::cerr << "[webview] native create failed. result = " << hr << std::endl;
+      shared_result->Error("[webview] native create failed.");
+    }
+  };
+
+  params.onNavigationRequest = [webviewId](int requestId, std::string url, bool isNewWindow) -> void {
+    flutter::EncodableMap arguments;
+    arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
+    arguments[flutter::EncodableValue("requestId")] = flutter::EncodableValue(requestId);
+    arguments[flutter::EncodableValue("url")] = flutter::EncodableValue(url);
+    arguments[flutter::EncodableValue("isNewWindow")] = flutter::EncodableValue(isNewWindow);
+    gMethodChannel->InvokeMethod("onNavigationRequest", std::make_unique<flutter::EncodableValue>(arguments));
+  };
+  
+  params.onPageStarted = [webviewId, params](std::string url) -> void {
+    flutter::EncodableMap arguments;
+    arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
+    arguments[flutter::EncodableValue("url")] = flutter::EncodableValue(url);
+    gMethodChannel->InvokeMethod("onPageStarted", std::make_unique<flutter::EncodableValue>(arguments));
+  };
+  
+  params.onPageFinished = [webviewId](std::string url) -> void {
+    flutter::EncodableMap arguments;
+    arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
+    arguments[flutter::EncodableValue("url")] = flutter::EncodableValue(url);
+    gMethodChannel->InvokeMethod("onPageFinished", std::make_unique<flutter::EncodableValue>(arguments));
+  };
+  
+  params.onHttpError = [webviewId](std::string url, int errCode) -> void {
+    flutter::EncodableMap arguments;
+    arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
+    arguments[flutter::EncodableValue("url")] = flutter::EncodableValue(url);
+    arguments[flutter::EncodableValue("errCode")] = flutter::EncodableValue(errCode);
+    gMethodChannel->InvokeMethod("onHttpError", std::make_unique<flutter::EncodableValue>(arguments));
+  };
+  
+  params.onSslAuthError = [webviewId](std::string url) -> void {
+    flutter::EncodableMap arguments;
+    arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
+    arguments[flutter::EncodableValue("url")] = flutter::EncodableValue(url);
+    gMethodChannel->InvokeMethod("onSslAuthError", std::make_unique<flutter::EncodableValue>(arguments));
+  };
+
+  params.onUrlChange = [webviewId](std::string url) -> void {
+    flutter::EncodableMap arguments;
+    arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
+    arguments[flutter::EncodableValue("url")] = flutter::EncodableValue(url);
+    gMethodChannel->InvokeMethod("onUrlChange", std::make_unique<flutter::EncodableValue>(arguments));
+  };
+
+  params.onPageTitleChanged = [webviewId](std::string title) -> void {
+    flutter::EncodableMap arguments;
+    arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
+    arguments[flutter::EncodableValue("title")] = flutter::EncodableValue(title);
+    gMethodChannel->InvokeMethod("onPageTitleChanged", std::make_unique<flutter::EncodableValue>(arguments));
+  };
+  
+  params.onWebMessageReceived = [=](std::string message) -> void {
+    flutter::EncodableMap arguments;
+    arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
+    arguments[flutter::EncodableValue("message")] = flutter::EncodableValue(message);
+    gMethodChannel->InvokeMethod("OnWebMessageReceived", std::make_unique<flutter::EncodableValue>(arguments));
+  };
+  
+  params.onMoveFocusRequest = [=](bool isNext) -> void {
+    flutter::EncodableMap arguments;
+    arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
+    arguments[flutter::EncodableValue("isNext")] = flutter::EncodableValue(isNext);
+    gMethodChannel->InvokeMethod("onMoveFocusRequest", std::make_unique<flutter::EncodableValue>(arguments));
+  };
+  
+  params.onFullScreenChanged = [=](BOOL isFullScreen) -> void {
+    // TODO: Android webview does'n support fullscreen listener... should we support ONLY in windows ???
+    flutter::EncodableMap arguments;
+    arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
+    arguments[flutter::EncodableValue("isFullScreen")] = flutter::EncodableValue(isFullScreen ? true : false);
+    gMethodChannel->InvokeMethod("OnFullScreenChanged", std::make_unique<flutter::EncodableValue>(arguments));
+  };
+  
+  params.onHistoryChanged = [=]() -> void {
+    flutter::EncodableMap arguments;
+    arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
+    gMethodChannel->InvokeMethod("onHistoryChanged", std::make_unique<flutter::EncodableValue>(arguments));
+  };
+  
+  params.onAskPermission = [=](std::string url, int kind, int deferralId) -> void {
+    flutter::EncodableMap arguments;
+    arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
+    arguments[flutter::EncodableValue("url")] = flutter::EncodableValue(url);
+    arguments[flutter::EncodableValue("kind")] = flutter::EncodableValue(kind);
+    arguments[flutter::EncodableValue("deferralId")] = flutter::EncodableValue(deferralId);
+    gMethodChannel->InvokeMethod("onAskPermission", std::make_unique<flutter::EncodableValue>(arguments));
+  };
+
+  PCWSTR pwUserDataFolder = NULL;
+  WCHAR wUserDataFolder[1024];
+  if (!userDataFolder.empty()) {
+    auto convResult = MultiByteToWideChar(CP_UTF8, 0, userDataFolder.c_str(), -1, wUserDataFolder, sizeof(wUserDataFolder) / sizeof(WCHAR));
+    if (convResult < 0) {
+      std::cout << "[webview_win_floating] native convert userDataFolder to utf16 (WCHAR*) failed: path = " << userDataFolder << std::endl;
+    } else {
+      pwUserDataFolder = wUserDataFolder;
+    }
+  }
+
+  MyWebView::Create(g_NativeHWND, params, pwUserDataFolder);
+}
+
 void WebviewWinFloatingPlugin::HandleMethodCall(
     const flutter::MethodCall<flutter::EncodableValue> &method_call,
     std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
 
   //std::cout << "native HandleMethodCall(): " << method_call.method_name() << std::endl;
 
-  if (method_call.method_name().compare("clearAll") == 0) {
+  if (method_call.method_name().compare("init") == 0) {
     // called when hot-restart in debug mode, and clear all the old webviews which created before hot-restart
     for(auto iter = webviewMap.begin(); iter != webviewMap.end(); iter++) {
       std::cout << "[webview_win_floating] old webview found, deleting" << std::endl;
@@ -93,89 +215,16 @@ void WebviewWinFloatingPlugin::HandleMethodCall(
 
   if (isCreateCall) {
     auto url = std::get<std::string>(arguments[flutter::EncodableValue("url")]);
-    std::shared_ptr<flutter::MethodResult<flutter::EncodableValue>> shared_result = std::move(result);
-    auto onCreate = [shared_result, webviewId, url](HRESULT hr, MyWebView *webview) -> void {
-      if (webview != NULL) {
-        webviewMap[webviewId] = webview;
-        std::cout << "[webview] native create: id = " << webviewId << std::endl;
-        if (!url.empty()) webview->loadUrl(toWideString(url));
-        shared_result->Success(flutter::EncodableValue(true));
-      } else {
-        std::cerr << "[webview] native create failed. result = " << hr << std::endl;
-        shared_result->Error("[webview] native create failed.");
-      }
-    };
-    auto onPageStarted = [webviewId](std::string url, bool isNewWindow, bool isUserInitiated) -> void {
-      flutter::EncodableMap arguments;
-      arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
-      arguments[flutter::EncodableValue("url")] = flutter::EncodableValue(url);
-      arguments[flutter::EncodableValue("isNewWindow")] = flutter::EncodableValue(isNewWindow);
-      arguments[flutter::EncodableValue("isUserInitiated")] = flutter::EncodableValue(isUserInitiated);
-      gMethodChannel->InvokeMethod("onPageStarted", std::make_unique<flutter::EncodableValue>(arguments));
-    };
-    auto onPageFinished = [webviewId](std::string url, int errCode) -> void {
-      flutter::EncodableMap arguments;
-      arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
-      arguments[flutter::EncodableValue("url")] = flutter::EncodableValue(url);
-      arguments[flutter::EncodableValue("errCode")] = flutter::EncodableValue(errCode);
-      gMethodChannel->InvokeMethod("onPageFinished", std::make_unique<flutter::EncodableValue>(arguments));
-    };
-    auto onPageTitleChanged = [webviewId](std::string title) -> void {
-      flutter::EncodableMap arguments;
-      arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
-      arguments[flutter::EncodableValue("title")] = flutter::EncodableValue(title);
-      gMethodChannel->InvokeMethod("onPageTitleChanged", std::make_unique<flutter::EncodableValue>(arguments));
-    };
-    auto onWebMessageReceived = [=](std::string message) -> void {
-      flutter::EncodableMap arguments;
-      arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
-      arguments[flutter::EncodableValue("message")] = flutter::EncodableValue(message);
-      gMethodChannel->InvokeMethod("OnWebMessageReceived", std::make_unique<flutter::EncodableValue>(arguments));
-    };
-    auto onMoveFocusRequest = [=](bool isNext) -> void {
-      flutter::EncodableMap arguments;
-      arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
-      arguments[flutter::EncodableValue("isNext")] = flutter::EncodableValue(isNext);
-      gMethodChannel->InvokeMethod("onMoveFocusRequest", std::make_unique<flutter::EncodableValue>(arguments));
-    };
-    auto onFullScreenChanged = [=](BOOL isFullScreen) -> void {
-      // TODO: Android webview does'n support fullscreen listener... should we support ONLY in windows ???
-      flutter::EncodableMap arguments;
-      arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
-      arguments[flutter::EncodableValue("isFullScreen")] = flutter::EncodableValue(isFullScreen ? true : false);
-      gMethodChannel->InvokeMethod("OnFullScreenChanged", std::make_unique<flutter::EncodableValue>(arguments));
-    };
-    auto onHistoryChanged = [=]() -> void {
-      flutter::EncodableMap arguments;
-      arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
-      gMethodChannel->InvokeMethod("onHistoryChanged", std::make_unique<flutter::EncodableValue>(arguments));
-    };
-    auto onAskPermission = [=](std::string url, int kind, int deferralId) -> void {
-      flutter::EncodableMap arguments;
-      arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
-      arguments[flutter::EncodableValue("url")] = flutter::EncodableValue(url);
-      arguments[flutter::EncodableValue("kind")] = flutter::EncodableValue(kind);
-      arguments[flutter::EncodableValue("deferralId")] = flutter::EncodableValue(deferralId);
-      gMethodChannel->InvokeMethod("onAskPermission", std::make_unique<flutter::EncodableValue>(arguments));
-    };
-
-    PCWSTR pwUserDataFolder = NULL;
-    WCHAR wUserDataFolder[1024];
     auto userDataFolder = std::get<std::string>(arguments[flutter::EncodableValue("userDataFolder")]);
-    if (!userDataFolder.empty()) {
-      auto convResult = MultiByteToWideChar(CP_UTF8, 0, userDataFolder.c_str(), -1, wUserDataFolder, sizeof(wUserDataFolder) / sizeof(WCHAR));
-      if (convResult < 0) {
-        std::cout << "[webview_win_floating] native convert userDataFolder to utf16 (WCHAR*) failed: path = " << userDataFolder << std::endl;
-      } else {
-        pwUserDataFolder = wUserDataFolder;
-      }
-    }
-
-    MyWebView::Create(g_NativeHWND, onCreate, onPageStarted, onPageFinished, onPageTitleChanged, onWebMessageReceived, onMoveFocusRequest, onFullScreenChanged, onHistoryChanged, onAskPermission, pwUserDataFolder);
-
+    createWebview(method_call, result, webviewId, url, userDataFolder);
   } else if (method_call.method_name().compare("setHasNavigationDecision") == 0) {
     auto hasNavigationDecision = std::get<bool>(arguments[flutter::EncodableValue("hasNavigationDecision")]);
     webview->setHasNavigationDecision(hasNavigationDecision);
+    result->Success();
+  } else if (method_call.method_name().compare("allowNavigationRequest") == 0) {
+    auto requestId = std::get<int>(arguments[flutter::EncodableValue("requestId")]);
+    auto isAllowed = std::get<bool>(arguments[flutter::EncodableValue("isAllowed")]);
+    webview->allowNavigationRequest(requestId, isAllowed);
     result->Success();
   } else if (method_call.method_name().compare("updateBounds") == 0) {
     RECT bounds;
@@ -193,6 +242,15 @@ void WebviewWinFloatingPlugin::HandleMethodCall(
     auto html = std::get<std::string>(arguments[flutter::EncodableValue("html")]);
     auto hr = webview->loadHtmlString(toWideString(html));
     result->Success(flutter::EncodableValue(SUCCEEDED(hr)));
+
+    if (!arguments[flutter::EncodableValue("baseUrl")].IsNull()) {
+      static bool g_isPrompted_baseUrl = false;
+      if (!g_isPrompted_baseUrl) {
+        std::cout << "[win_webview_floating] loadHtmlString() ignore 'baseUrl' parameter in Windows. WebView2 doesn't support. ref: https://github.com/MicrosoftEdge/WebView2Feedback/issues/530" << std::endl;
+        g_isPrompted_baseUrl = true;
+      }
+    }
+
   } else if (method_call.method_name().compare("runJavascript") == 0) {
     std::shared_ptr<flutter::MethodResult<flutter::EncodableValue>> shared_result = std::move(result);
     auto javaScriptString = std::get<std::string>(arguments[flutter::EncodableValue("javaScriptString")]);

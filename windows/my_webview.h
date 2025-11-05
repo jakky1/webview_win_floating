@@ -12,25 +12,37 @@
  
 typedef std::function<void(std::string url, int kind, int deferralId)> OnAskPermissionFunc;
 
+class MyWebView;
+class MyWebViewCreateParams {
+public:
+	std::function<void(HRESULT, MyWebView*)> onCreated;
+    std::function<void(int requestId, std::string url, bool isNewWindow)> onNavigationRequest;
+	std::function<void(std::string url)> onPageStarted;
+	std::function<void(std::string url)> onPageFinished;
+	std::function<void(std::string url, int errCode)> onHttpError;	
+	std::function<void(std::string url)> onSslAuthError;	
+	std::function<void(std::string)> onUrlChange;
+	std::function<void(std::string)> onPageTitleChanged;
+	std::function<void(std::string)> onWebMessageReceived;
+	std::function<void(bool)> onMoveFocusRequest;
+	std::function<void(bool)> onFullScreenChanged;
+	std::function<void()> onHistoryChanged;
+	OnAskPermissionFunc onAskPermission;
+};
+
 class MyWebView
 {
 public:
 	static MyWebView* Create(HWND hWnd,
-		std::function<void(HRESULT, MyWebView*)> onCreated,
-		std::function<void(std::string url, bool isNewWindow, bool isUserInitiated)> onPageStarted,
-		std::function<void(std::string, int errCode)> onPageFinished,
-		std::function<void(std::string)> onPageTitleChanged,
-		std::function<void(std::string)> onWebMessageReceived,
-		std::function<void(bool)> onMoveFocusRequest,
-		std::function<void(bool)> onFullScreenChanged,
-		std::function<void()> onHistoryChanged,
-		OnAskPermissionFunc onAskPermission,
+		MyWebViewCreateParams params,
 		PCWSTR pwUserDataFolder = NULL);
 
 	//MyWebView();
 	virtual ~MyWebView() {};
 
 	virtual void setHasNavigationDecision(bool hasNavigationDecision) = 0;
+	virtual void allowNavigationRequest(int requestId, bool isAllowed) = 0;	
+
 	virtual HRESULT loadUrl(LPCWSTR url) = 0;
 	virtual HRESULT loadHtmlString(LPCWSTR html) = 0;
 	virtual HRESULT runJavascript(LPCWSTR javaScriptString, bool ignoreResult = true, std::function<void(std::string)> callback = NULL) = 0;

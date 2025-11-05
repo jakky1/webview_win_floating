@@ -50,6 +50,14 @@ abstract class WebviewWinFloatingPlatform extends PlatformInterface {
     throw UnimplementedError();
   }
 
+  Future<void> allowNavigationRequest(
+    int webviewId,
+    int requestId,
+    bool isAllowed,
+  ) {
+    throw UnimplementedError();
+  }
+
   Future<void> updateBounds(
     int webviewId,
     Offset offset,
@@ -63,7 +71,7 @@ abstract class WebviewWinFloatingPlatform extends PlatformInterface {
     throw UnimplementedError();
   }
 
-  Future<void> loadHtmlString(int webviewId, String html) {
+  Future<void> loadHtmlString(int webviewId, String html, String? baseUrl) {
     throw UnimplementedError();
   }
 
@@ -71,7 +79,7 @@ abstract class WebviewWinFloatingPlatform extends PlatformInterface {
     throw UnimplementedError();
   }
 
-  Future<String> runJavaScriptReturningResult(
+  Future<Object> runJavaScriptReturningResult(
     int webviewId,
     String javaScriptString,
   ) {

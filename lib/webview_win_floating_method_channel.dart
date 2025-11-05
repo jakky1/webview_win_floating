@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:convert';
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
@@ -15,12 +16,18 @@ class MethodChannelWebviewWinFloating extends WebviewWinFloatingPlatform {
 
   final webviewMap = <int, WeakReference<WinWebViewController>>{};
   MethodChannelWebviewWinFloating() {
+    // When hot-reload in debugging mode, clear all old webviews created before hot-reload
+    methodChannel.invokeMethod<bool>('init');
+
     assert(() {
-      // When hot-reload in debugging mode, clear all old webviews created before hot-reload
-      methodChannel.invokeMethod<bool>('clearAll');
+      // When hot-reload in debugging mode, skip the following code
       return true;
     }());
 
+    initMethodCallHandler();
+  }
+
+  void initMethodCallHandler() {
     methodChannel.setMethodCallHandler((call) async {
       //log("[webview] native->flutter: $call");
       int? webviewId = call.arguments["webviewId"];
@@ -39,17 +46,38 @@ class MethodChannelWebviewWinFloating extends WebviewWinFloatingPlatform {
       }
 
       if (call.method == "OnWebMessageReceived") {
+        // NOTE: only linux pass 'JkChannelName'.
+        //       Windows put 'JkChannelName' in 'message' json string
+        String? channelName = call.arguments["JkChannelName"];
         String message = call.arguments["message"]!;
-        controller.notifyMessageReceived_(message);
-      } else if (call.method == "onPageStarted") {
+
+        var jobj = json.decode(message);
+        if (channelName != null) {
+          // only for Linux, not for Windows
+          jobj = {"JkChannelName": channelName, "msg": jobj};
+        }
+        controller.notifyMessageReceived_(jobj);
+      } else if (call.method == "onNavigationRequest") {
+        int requestId = call.arguments["requestId"]!;
         String url = call.arguments["url"]!;
         bool isNewWindow = call.arguments["isNewWindow"]!;
-        bool isUserInitiated = call.arguments["isUserInitiated"]!;
-        controller.notifyOnPageStarted_(url, isNewWindow, isUserInitiated);
+        controller.notifyOnNavigationRequest_(requestId, url, isNewWindow);
+      } else if (call.method == "onPageStarted") {
+        String url = call.arguments["url"]!;
+        controller.notifyOnPageStarted_(url);
       } else if (call.method == "onPageFinished") {
         String url = call.arguments["url"]!;
+        controller.notifyOnPageFinished_(url);
+      } else if (call.method == "onHttpError") {
+        String url = call.arguments["url"]!;
         int errCode = call.arguments["errCode"]!;
-        controller.notifyOnPageFinished_(url, errCode);
+        controller.notifyOnHttpError_(url, errCode);
+      } else if (call.method == "onSslAuthError") {
+        String url = call.arguments["url"]!;
+        controller.notifyOnSslAuthError_(url);
+      } else if (call.method == "onUrlChange") {
+        String url = call.arguments["url"]!;
+        controller.notifyOnUrlChange_(url);
       } else if (call.method == "onPageTitleChanged") {
         String title = call.arguments["title"]!;
         controller.notifyOnPageTitleChanged_(title);
@@ -113,6 +141,19 @@ class MethodChannelWebviewWinFloating extends WebviewWinFloatingPlatform {
   }
 
   @override
+  Future<void> allowNavigationRequest(
+    int webviewId,
+    int requestId,
+    bool isAllowed,
+  ) async {
+    return await methodChannel.invokeMethod<void>('allowNavigationRequest', {
+      "webviewId": webviewId,
+      "requestId": requestId,
+      "isAllowed": isAllowed,
+    });
+  }
+
+  @override
   Future<void> updateBounds(
     int webviewId,
     Offset offset,
@@ -137,10 +178,15 @@ class MethodChannelWebviewWinFloating extends WebviewWinFloatingPlatform {
   }
 
   @override
-  Future<void> loadHtmlString(int webviewId, String html) async {
+  Future<void> loadHtmlString(
+    int webviewId,
+    String html,
+    String? baseUrl,
+  ) async {
     await methodChannel.invokeMethod<bool>('loadHtmlString', {
       "webviewId": webviewId,
       "html": html,
+      "baseUrl": baseUrl,
     });
   }
 
@@ -154,16 +200,18 @@ class MethodChannelWebviewWinFloating extends WebviewWinFloatingPlatform {
   }
 
   @override
-  Future<String> runJavaScriptReturningResult(
+  Future<Object> runJavaScriptReturningResult(
     int webviewId,
     String javaScriptString,
   ) async {
-    return await methodChannel.invokeMethod<String>('runJavascript', {
-          "webviewId": webviewId,
-          "javaScriptString": javaScriptString,
-          "ignoreResult": false,
-        }) ??
-        "";
+    var value = await methodChannel.invokeMethod<String?>('runJavascript', {
+      "webviewId": webviewId,
+      "javaScriptString": javaScriptString,
+      "ignoreResult": false,
+    });
+
+    if (value == null) return Null; // null or undefined in javascript
+    return jsonDecode(value);
   }
 
   @override

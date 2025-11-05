@@ -3,6 +3,7 @@
 #include <functional>
 #include <iostream>
 #include <map>
+#include <utility> // std::pair
 #include <regex>
 
 #include <windows.h>
@@ -38,20 +39,13 @@ class MyWebViewImpl : public MyWebView
 {
 public:
     MyWebViewImpl(HWND hWnd,
-        std::function<void(HRESULT, MyWebView*)> onCreated,
-        std::function<void(std::string url, bool isNewWindow, bool isUserInitiated)> onPageStarted,
-        std::function<void(std::string, int errCode)> onPageFinished,
-        std::function<void(std::string)> onPageTitleChanged,
-        std::function<void(std::string)> onWebMessageReceived,
-        std::function<void(bool)> onMoveFocusRequest,
-        std::function<void(bool)> onFullScreenChanged,
-        std::function<void()> onHistoryChanged,
-        OnAskPermissionFunc onAskPermission,
+        MyWebViewCreateParams params,
         PCWSTR pwUserDataFolder);
 
     virtual ~MyWebViewImpl() override;
 
 	void setHasNavigationDecision(bool hasNavigationDecision);
+    void allowNavigationRequest(int requestId, bool isAllowed);
 
     HRESULT loadUrl(PCWSTR url);
     HRESULT loadHtmlString(PCWSTR html);
@@ -93,16 +87,26 @@ public:
     void openDevTools() override;
 
 private:
-    template<class T> wil::com_ptr<T> getProfile();
-    std::wstring nowLoadingUrl;
+    MyWebViewCreateParams m_params;
     bool m_isNowGoBackForward = false;
+
+    void __sendOnNavigationRequest(std::wstring utf16Url, std::string utf8Url, bool isNewWindow);
+    void __sendOnPageStarted(std::string url, UINT64 navigationId);
+
+    std::map<UINT64, std::string> m_navigationMap;
+    std::map<int, std::wstring> m_navigationRequestMap;
+    int m_lastNavigationRequestId = 0;
   	bool m_hasNavigationDecision = false;
+
+    std::wstring nowLoadingUrl;
+
+    template<class T> wil::com_ptr<T> getProfile();
 
     std::map<std::wstring, std::wstring> channelMap; // channel name -> id of RemoveScriptToExecuteOnDocumentCreated
     bool m_hasRegisteredChannel = false;
 
     std::map<int, std::pair< wil::com_ptr<ICoreWebView2PermissionRequestedEventArgs>, wil::com_ptr<ICoreWebView2Deferral> >> permissionArgsMap;
-    int lastPermissionDeferralId = 0;
+    int m_lastPermissionDeferralId = 0;
 
     wil::com_ptr<ICoreWebView2> m_pWebview;
     wil::com_ptr<ICoreWebView2Controller> m_pController;
@@ -111,24 +115,13 @@ private:
 };
 wil::com_ptr<ICoreWebView2Environment> g_env;
 
-#include <map>
-std::map<UINT64, std::string> g_navigationMap;
-
 // --------------------------------------------------------------------------
 
 MyWebView* MyWebView::Create(HWND hWnd,
-    std::function<void(HRESULT, MyWebView*)> callback,
-    std::function<void(std::string url, bool isNewWindow, bool isUserInitiated)> onPageStarted,
-    std::function<void(std::string, int errCode)> onPageFinished,
-    std::function<void(std::string)> onPageTitleChanged,
-    std::function<void(std::string)> onWebMessageReceived,
-    std::function<void(bool)> onMoveFocusRequest,
-    std::function<void(bool)> onFullScreenChanged,
-    std::function<void()> onHistoryChanged,
-    OnAskPermissionFunc onAskPermission,
+    MyWebViewCreateParams params,
     PCWSTR pwUserDataFolder)
 {
-    return new MyWebViewImpl(hWnd, callback, onPageStarted, onPageFinished, onPageTitleChanged, onWebMessageReceived, onMoveFocusRequest, onFullScreenChanged, onHistoryChanged, onAskPermission, pwUserDataFolder);
+    return new MyWebViewImpl(hWnd, params, pwUserDataFolder);
 }
 
 HRESULT InitWebViewRuntime(PCWSTR pwUserDataFolder, std::function<void(HRESULT)> callback = nullptr)
@@ -153,27 +146,19 @@ HRESULT ReleaseWebViewRuntime()
 }
 
 MyWebViewImpl::MyWebViewImpl(HWND hWnd,
-    std::function<void(HRESULT, MyWebView*)> onCreated,
-    std::function<void(std::string url, bool isNewWindow, bool isUserInitiated)> onPageStarted,
-    std::function<void(std::string, int errCode)> onPageFinished,
-    std::function<void(std::string)> onPageTitleChanged,
-    std::function<void(std::string)> onWebMessageReceived,
-    std::function<void(bool)> onMoveFocusRequest,
-    std::function<void(bool)> onFullScreenChanged,
-    std::function<void()> onHistoryChanged,
-    OnAskPermissionFunc onAskPermission,
-    PCWSTR pwUserDataFolder = NULL)
+    MyWebViewCreateParams params,
+    PCWSTR pwUserDataFolder = NULL) : m_params(params)
 {
     InitWebViewRuntime(pwUserDataFolder, [=](HRESULT hr) -> void {
         if (hr != S_OK) {
-            onCreated(hr, NULL);
+            params.onCreated(hr, NULL);
             return;
         }
 
         g_env->CreateCoreWebView2Controller(hWnd, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
             [=](HRESULT hr, ICoreWebView2Controller* controller) -> HRESULT {
                 if (hr != S_OK) {
-                    onCreated(hr, NULL);
+                    params.onCreated(hr, NULL);
                     return hr;
                 }
 
@@ -189,15 +174,17 @@ MyWebViewImpl::MyWebViewImpl(HWND hWnd,
                 m_pWebview->add_NavigationStarting(
                     Callback<ICoreWebView2NavigationStartingEventHandler>(
                         [=](ICoreWebView2* sender, ICoreWebView2NavigationStartingEventArgs* args) -> HRESULT {
+
                             wil::unique_cotaskmem_string url;
-                            UINT64 navigationId = 0;
+                            args->get_Uri(&url);
+                            auto utf16Url = std::wstring(url.get());
+                            auto utf8Url = utf8_encode(utf16Url);
+
                             BOOL isRedirected = FALSE;
-                            BOOL isPostMethod = FALSE;
-                            ICoreWebView2HttpRequestHeaders* headers = nullptr;
-                            HRESULT hr = args->get_Uri(&url);
-                            args->get_NavigationId(&navigationId);
                             args->get_IsRedirected(&isRedirected);
 
+                            BOOL isPostMethod = FALSE;
+                            ICoreWebView2HttpRequestHeaders* headers = NULL;
                             args->get_RequestHeaders(&headers);
                             if (headers != nullptr) {
                                 // http POST method always set "Content-Type" header,
@@ -208,33 +195,38 @@ MyWebViewImpl::MyWebViewImpl(HWND hWnd,
                                 headers->Contains(L"Content-Type", &isPostMethod);
                             }
 
-                            if (SUCCEEDED(hr)) {
-                                auto utf16Url = std::wstring(url.get());
-                                auto utf8Url = utf8_encode(utf16Url);
-                                g_navigationMap[navigationId] = utf8Url;
-                                //bool isAllowed = checkUrlAllowed(utf8Url); // TODO
-
-                                bool userInitiated = true;
-                                if (m_isNowGoBackForward
-                                    || isPostMethod == TRUE
-                                    || isRedirected == TRUE
-                                    || nowLoadingUrl.compare(url.get()) == 0
-                                    || utf16Url.rfind(L"data:text/html;", 0) == 0) {
-                                    // is triggered by loadUrl() or loadHtmlString(), not user initiated
-                                    // or is triggered by goBack / goForward
-                                    // then we don't ask client Dart code (onNavigationRequest) to allow/prevent loading url
-                                    nowLoadingUrl = L"";
-                                    m_isNowGoBackForward = false;
-                                    userInitiated = false;
-                                }
-
-                                onPageStarted(utf8Url, false, userInitiated);
-
-                                // always cancel user initiated navigation, and pass this event to [webview_flutter]
-                                // and after [webview_flutter] ask client dart code, if client say yes,
-                                // [webview_flutter] then call loadUrl() to load url again
-                                if (userInitiated && m_hasNavigationDecision) args->put_Cancel(TRUE);
+                            bool userInitiated = true;
+                            if (m_isNowGoBackForward
+                                || isPostMethod == TRUE
+                                || isRedirected == TRUE
+                                || nowLoadingUrl.compare(url.get()) == 0
+                                || utf16Url.rfind(L"data:text/html;", 0) == 0) {
+                                // is triggered by loadUrl() or loadHtmlString(), not user initiated
+                                // or is triggered by goBack / goForward
+                                // then we don't ask client Dart code (onNavigationRequest) to allow/prevent loading url
+                                nowLoadingUrl = L"";
+                                m_isNowGoBackForward = false;
+                                userInitiated = false;
                             }
+
+
+                            if (m_hasNavigationDecision && userInitiated) {
+                                // for a user-initiated request,
+                                // cancel the request first, 
+                                // and ask dart code to grant/deny this request
+                                // if dart code deny, nothing happen
+                                // if dart code grant, call loadUrl() to load url again
+                                // Windows WebView2 doesn't support asynchronous decision,
+                                // so we must cancel the request here, before dart code make decision
+                                args->put_Cancel(TRUE);
+                                __sendOnNavigationRequest(utf16Url, utf8Url, false);
+                            } else {
+                                // for a non-user-initiated request,
+                                // just allow the request, and notify dart code onPageStarted()
+                                UINT64 navigationId;
+                                args->get_NavigationId(&navigationId);
+                                __sendOnPageStarted(utf8Url, navigationId);
+                            }                            
                             return S_OK;
                         }).Get(), NULL);
 
@@ -242,23 +234,17 @@ MyWebViewImpl::MyWebViewImpl(HWND hWnd,
                     Callback<ICoreWebView2NewWindowRequestedEventHandler>(
                         [=](ICoreWebView2* sender, ICoreWebView2NewWindowRequestedEventArgs* args) -> HRESULT {
                             wil::unique_cotaskmem_string url;
-                            HRESULT hr = args->get_Uri(&url);
-                            if (SUCCEEDED(hr)) {
-                                auto utf8Url = utf8_encode(std::wstring(url.get()));
-                                //bool isAllowed = m_bAllowNewWindow && checkUrlAllowed(utf8Url); //TODO
+                            args->get_Uri(&url);
+                            auto utf16Url = std::wstring(url.get());
+                            auto utf8Url = utf8_encode(utf16Url);
 
-                                args->put_Handled(TRUE);
-                                if (m_hasNavigationDecision) {
-                                    onPageStarted(utf8Url, true, true);
-                                } else {
-                                    loadUrl(url.get());
-                                }
+                            if (m_hasNavigationDecision) {
+                                __sendOnNavigationRequest(utf16Url, utf8Url, true);
+                            } else {
+                                loadUrl(url.get());
                             }
 
-                            //wil::com_ptr<ICoreWebView2Deferral> deferral;
-                            //hr = args->GetDeferral(&deferral);
-                            //deferral->Complete
-
+                            args->put_Handled(TRUE); // ignore default handler
                             return S_OK;
                         }).Get(), NULL);
 
@@ -266,33 +252,64 @@ MyWebViewImpl::MyWebViewImpl(HWND hWnd,
                     Callback<ICoreWebView2NavigationCompletedEventHandler>(
                         [=](ICoreWebView2* sender, ICoreWebView2NavigationCompletedEventArgs* args) -> HRESULT {
                             UINT64 navigationId = 0;
-                            HRESULT hr = S_OK;
-                            int errCode = 0;
+                            args->get_NavigationId(&navigationId);
+                            std::string url = m_navigationMap[navigationId];
+                            m_navigationMap.erase(navigationId);
+
                             BOOL success = FALSE;
                             args->get_IsSuccess(&success);
-                            if (!success) {
-                                COREWEBVIEW2_WEB_ERROR_STATUS webErrorStatus;
-                                hr = args->get_WebErrorStatus(&webErrorStatus);
-                                if (SUCCEEDED(hr)) {
-                                    errCode = webErrorStatus; // TODO: enum all the error code...
+                            if (success) {
+                                params.onPageFinished(url);
+                            } else {
+                                int errCode = 0;
+                                wil::com_ptr<ICoreWebView2NavigationCompletedEventArgs> _args = args;
+                                auto args2 = _args.query<ICoreWebView2NavigationCompletedEventArgs2>();
+                                args2->get_HttpStatusCode(&errCode);
+
+                                if (errCode == 0) { // no http status code found
+                                    COREWEBVIEW2_WEB_ERROR_STATUS webErrorStatus;
+                                    args->get_WebErrorStatus(&webErrorStatus);
+                                    errCode = webErrorStatus;
+
+                                    switch (errCode) {
+                                        case COREWEBVIEW2_WEB_ERROR_STATUS_OPERATION_CANCELED:
+                                            // user cancel navigation, or deny navigation. 
+                                            // ignore this error
+                                            return S_OK;
+                                        case COREWEBVIEW2_WEB_ERROR_STATUS_CERTIFICATE_COMMON_NAME_IS_INCORRECT:
+                                        case COREWEBVIEW2_WEB_ERROR_STATUS_CERTIFICATE_EXPIRED:
+                                        case COREWEBVIEW2_WEB_ERROR_STATUS_CLIENT_CERTIFICATE_CONTAINS_ERRORS:
+                                        case COREWEBVIEW2_WEB_ERROR_STATUS_CERTIFICATE_REVOKED:
+                                        case COREWEBVIEW2_WEB_ERROR_STATUS_CERTIFICATE_IS_INVALID:
+                                            // for SSL certificate error
+                                            params.onSslAuthError(url);
+                                            return S_OK;
+                                    }
                                 }
+
+                                params.onHttpError(url, errCode);
                             }
 
-                            args->get_NavigationId(&navigationId);
-                            std::string url = g_navigationMap[navigationId];
-                            g_navigationMap.erase(navigationId);
+                            return S_OK;
+                        }).Get(), NULL);
 
-                            if (errCode != COREWEBVIEW2_WEB_ERROR_STATUS_OPERATION_CANCELED) {
-                                onPageFinished(url, errCode);
-                            }
+                m_pWebview->add_DocumentTitleChanged(
+                    Callback<ICoreWebView2DocumentTitleChangedEventHandler>(
+                        [=](ICoreWebView2* sender, IUnknown* args) -> HRESULT {
+                            wil::unique_cotaskmem_string title;
+                            HRESULT hr = sender->get_DocumentTitle(&title);
+                            if (FAILED(hr)) return S_OK;
+
+                            auto utf8Title = utf8_encode(std::wstring(title.get()));
+                            params.onPageTitleChanged(utf8Title);
                             return S_OK;
                         }).Get(), NULL);
 
                 m_pWebview->add_HistoryChanged(
                     Callback<ICoreWebView2HistoryChangedEventHandler>(
                         [=](ICoreWebView2* sender, IUnknown* args) -> HRESULT {
-                            if (onHistoryChanged) {
-                                onHistoryChanged();
+                            if (params.onHistoryChanged) {
+                                params.onHistoryChanged();
                             }
 
                             return S_OK;
@@ -306,7 +323,7 @@ MyWebViewImpl::MyWebViewImpl(HWND hWnd,
                             HRESULT hr = sender->get_DocumentTitle(&pwTitle);
                             if (SUCCEEDED(hr)) {
                                 std::string title = utf8_encode(pwTitle.get());
-                                onPageTitleChanged(title);
+                                params.onPageTitleChanged(title);
                             }
                             return S_OK;
                         }).Get(), NULL);
@@ -315,11 +332,11 @@ MyWebViewImpl::MyWebViewImpl(HWND hWnd,
                 hr = m_pWebview->add_WebMessageReceived(
                     Callback<ICoreWebView2WebMessageReceivedEventHandler>(
                         [=](ICoreWebView2* sender, ICoreWebView2WebMessageReceivedEventArgs* args) -> HRESULT {
-                            if (onWebMessageReceived != NULL) {
+                            if (params.onWebMessageReceived != NULL) {
                                 wil::unique_cotaskmem_string json;
                                 HRESULT hr = args->get_WebMessageAsJson(&json);
                                 if (SUCCEEDED(hr)) {
-                                    onWebMessageReceived(Utf8FromUtf16(json.get()));
+                                    params.onWebMessageReceived(Utf8FromUtf16(json.get()));
                                 }
                             }
                             return S_OK;
@@ -330,7 +347,7 @@ MyWebViewImpl::MyWebViewImpl(HWND hWnd,
                         [=](ICoreWebView2Controller* sender, ICoreWebView2MoveFocusRequestedEventArgs* args) -> HRESULT {
                             COREWEBVIEW2_MOVE_FOCUS_REASON reason;
                             args->get_Reason(&reason);
-                            onMoveFocusRequest(reason == COREWEBVIEW2_MOVE_FOCUS_REASON_NEXT);
+                            params.onMoveFocusRequest(reason == COREWEBVIEW2_MOVE_FOCUS_REASON_NEXT);
                             return S_OK;
                         }).Get(), NULL);
 
@@ -339,7 +356,7 @@ MyWebViewImpl::MyWebViewImpl(HWND hWnd,
                         [=](ICoreWebView2* sender, IUnknown* args) -> HRESULT {
                             BOOL isFullScreen;
                             m_pWebview->get_ContainsFullScreenElement(&isFullScreen);
-                            onFullScreenChanged(isFullScreen);
+                            params.onFullScreenChanged(isFullScreen);
                             return S_OK;
                         })
                     .Get(), nullptr);
@@ -347,11 +364,11 @@ MyWebViewImpl::MyWebViewImpl(HWND hWnd,
                 hr = m_pWebview->add_PermissionRequested(
                     Callback<ICoreWebView2PermissionRequestedEventHandler>(
                         [=](ICoreWebView2* sender, ICoreWebView2PermissionRequestedEventArgs* args) -> HRESULT {
-                            askFlutterPermission(args, onAskPermission);                           
+                            askFlutterPermission(args, params.onAskPermission);                           
                             return S_OK;
                     }).Get(), NULL);
 
-                onCreated(hr, this);
+                params.onCreated(hr, this);
                 return hr;
             }).Get());
         });
@@ -367,7 +384,7 @@ void MyWebViewImpl::askFlutterPermission(wil::com_ptr<ICoreWebView2PermissionReq
     args->get_Uri(&uri);
     args->GetDeferral(&deferral);
 
-    int deferralId = ++lastPermissionDeferralId;
+    int deferralId = ++m_lastPermissionDeferralId;
     permissionArgsMap[deferralId] = std::pair(args, deferral);
     onAskPermission(utf8_encode(std::wstring(uri.get())), kind, deferralId);
 }
@@ -399,6 +416,30 @@ void MyWebViewImpl::setHasNavigationDecision(bool hasNavigationDecision)
     m_hasNavigationDecision = hasNavigationDecision;
 }
 
+void MyWebViewImpl::__sendOnNavigationRequest(std::wstring utf16Url, std::string utf8Url, bool isNewWindow) {
+    m_lastNavigationRequestId++;
+    m_navigationRequestMap[m_lastNavigationRequestId] = utf16Url;
+    m_params.onNavigationRequest(m_lastNavigationRequestId, utf8Url, isNewWindow);
+}
+
+void MyWebViewImpl::__sendOnPageStarted(std::string url, UINT64 navigationId) {
+    m_navigationMap[navigationId] = url;
+    m_params.onPageStarted(url);
+
+    // TODO: 
+    // how to listen url change in WebView2 ?
+    // we simulate 'onUrlChange' event here
+    // but this cannot detect any url changed by javascript pushState()...
+    m_params.onUrlChange(url);
+}
+
+void MyWebViewImpl::allowNavigationRequest(int requestId, bool isAllowed) {
+    if (isAllowed) {
+        auto utf16Url = m_navigationRequestMap[requestId];
+        loadUrl(utf16Url.c_str());
+    }
+    m_navigationRequestMap.erase(requestId);
+}
 
 HRESULT MyWebViewImpl::loadUrl(LPCWSTR url)
 {
