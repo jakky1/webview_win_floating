@@ -27,7 +27,9 @@ all Flutter widgets cannot be displayed above the webview.
 
 However, since it is a native WebView component, without texture involved, so:
 ```
-the webview runs smoothly at a high fps, just the same with a native WebView, especially during playing video or scrolling.
+the webview runs smoothly at a high fps, 
+just the same with a native WebView,
+especially during playing video or scrolling.
 ```
 
 Features:
@@ -142,6 +144,42 @@ myChannelName.postMessage("This message is from javascript");
 </body>
 </html>
 ''';
+```
+
+#### Listen to events
+
+- onPageStarted
+- onPageFinished
+- onUrlChange
+- onHttpError (e.g. 403 Not Found)
+- onSslAuthError (e.g. SSL certification expired, revoked, untrust)
+
+```dart
+controller.setNavigationDelegate(NavigationDelegate(
+  onPageStarted: (url) {
+    print("onPageStarted: $url");
+  },
+  onPageFinished: (url) {
+    print("onPageFinished: $url");
+  },
+  onUrlChange: (change) {
+    String url = change.url ?? "";
+    print("onUrlChange: $url"),
+  },
+  onHttpError: (error) {
+    int httpCode = error.response!.statusCode; // e.g. 403 (Not Found)
+    String url = error.response!.uri.toString();
+    print("onHttpError: code=$httpCode, url : $url");
+  },
+  onSslAuthError: (error) {
+    if (error is WinSslAuthError) {
+      print("onSslAuthError: ${(error as WinSslAuthError).url}");
+    } else {
+      print("onSslAuthError: unknown url}");
+    }
+    error.cancel();
+  },
+));
 ```
 
 ## controller operations
@@ -299,37 +337,8 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
+  
     controller.setJavaScriptMode(JavaScriptMode.unrestricted);
-    controller.setBackgroundColor(Colors.cyanAccent);
-    controller.setNavigationDelegate(NavigationDelegate(
-      onNavigationRequest: (request) {
-        if (request.url.startsWith("https://www.google.com")) {
-          return NavigationDecision.navigate;
-        } else {
-          log("prevent user navigate out of google website!");
-          return NavigationDecision.prevent;
-        }
-      },
-      onPageStarted: (url) => print("onPageStarted: $url"),
-      onPageFinished: (url) => print("onPageFinished: $url"),
-      onUrlChange: (change) {
-        String url = change.url ?? "";
-        print("onUrlChange: $url"),
-      },
-      onHttpError: (error) {
-        int httpCode = error.response!.statusCode; // e.g. 403 (Not Found)
-        String url = error.response!.uri.toString();
-        print("onHttpError: code=$httpCode, url : $url");
-      },
-      onSslAuthError: (error) {
-        if (error is WinSslAuthError) {
-          print("onSslAuthError: ${(error as WinSslAuthError).url}");
-        } else {
-          print("onSslAuthError: unknown url}");
-        }
-        error.cancel();
-      },
-    ));
     controller.loadRequest(Uri.parse("https://www.google.com/"));
   }
 
