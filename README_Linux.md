@@ -27,7 +27,7 @@ PATH=$PATH:$FLUTTER_SDK_PATH/bin
 
 For developers:
 ```
-sudo apt install cmake ninja-build clang libstdc++-dev
+sudo apt install libgtk-3-dev git pkg-config cmake ninja-build clang libstdc++-dev
 ```
 
 ## Install webkit2gtk
