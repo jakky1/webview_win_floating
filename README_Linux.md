@@ -2,7 +2,7 @@
 
 When using this package on Linux, there are a few important points to note.
 
-The following instructions use the `Ubuntu Linux 25.0.4` environment as an example.
+The following instructions use the `Ubuntu Linux 24.04.3 LTS` environment as an example.
 
 ## DON't install Flutter SDK via apt / snap
 
