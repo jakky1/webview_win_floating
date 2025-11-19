@@ -17,6 +17,10 @@ You can call API of [webview_flutter](https://pub.dev/packages/webview_flutter) 
 Meaning your app can run seamlessly across `ALL platforms`.
 
 
+## API BREAKING CHANGES in 3.x
+
+Refer to [this link](https://github.com/jakky1/webview_win_floating/blob/master/BREAKING_CHANGES.md) for detail.
+
 ## Features & Limitations
 
 This package place a native webview component on top of the window, no texture involved. That's why it called "floating", so:
