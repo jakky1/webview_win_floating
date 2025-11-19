@@ -210,8 +210,21 @@ class MethodChannelWebviewWinFloating extends WebviewWinFloatingPlatform {
       "ignoreResult": false,
     });
 
-    if (value == null) return Null; // null or undefined in javascript
-    return jsonDecode(value);
+    if (value == null) return "null"; // null or undefined in javascript
+
+    // int value
+    var vi = int.tryParse(value);
+    if (vi != null) return vi;
+
+    // double value
+    var vd = double.tryParse(value);
+    if (vd != null) return vd;
+
+    // boolean value
+    var vb = bool.tryParse(value);
+    if (vb != null) return vb;
+
+    return value;
   }
 
   @override
