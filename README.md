@@ -3,6 +3,9 @@
 Flutter webView for Windows / Linux.
 It's also a plugin that implements the interface of [webview_flutter][1].
 
+#### BREAKING CHANGES
+For developers upgrading from version 2.x to 3.x, please refer to [API BREAKING CHANGES](https://github.com/jakky1/webview_win_floating/blob/master/BREAKING_CHANGES.md)
+
 ![](https://raw.githubusercontent.com/jakky1/webview_win_floating/master/screenshot.jpg)
 
 ## Platform Support
@@ -16,10 +19,6 @@ You can call API of [webview_flutter](https://pub.dev/packages/webview_flutter) 
 
 Meaning your app can run seamlessly across `ALL platforms`.
 
-
-## API BREAKING CHANGES in 3.x
-
-Refer to [this link](https://github.com/jakky1/webview_win_floating/blob/master/BREAKING_CHANGES.md) for detail.
 
 ## Features & Limitations
 
