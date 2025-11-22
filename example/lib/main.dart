@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_win_floating/webview_win_floating.dart';
 
-typedef WebViewController = WinWebViewController;
-typedef WebViewWidget = WinWebViewWidget;
-typedef NavigationDelegate = WinNavigationDelegate;
+//typedef WebViewController = WinWebViewController;
+//typedef WebViewWidget = WinWebViewWidget;
+//typedef NavigationDelegate = WinNavigationDelegate;
 
 void main() {
   runApp(const MyApp());
@@ -17,9 +17,9 @@ class MyApp extends StatelessWidget {
     return const Row(
       textDirection: TextDirection.ltr,
       children: [
-        Expanded(child: MyWebViewTab(url: "https://www.youtube.com")),
+        Expanded(child: MyWebViewTab(url: "https://badssl.com")),
+        //Expanded(child: MyWebViewTab(url: "https://www.youtube.com")),
         //Expanded(child: MyWebViewTab(url: "https://www.bennish.net/web-notifications.html")),
-        Expanded(child: MyWebViewTab(url: "https://www.nccu.edu.tw/")),
       ],
     );
   }
@@ -100,8 +100,9 @@ class _MyWebViewTabState extends State<MyWebViewTab> {
         print("onPageFinished: $url");
       },
       onHttpError: (error) {
-        print(
-            "onHttpError: code=${error.response!.statusCode}, url : ${error.response!.uri.toString()}");
+        int httpCode = error.response!.statusCode;
+        String url = error.response!.uri.toString();
+        print("onHttpError: code=$httpCode, url : $url");
       },
       onSslAuthError: (error) {
         if (error is WinSslAuthError) {
@@ -109,16 +110,18 @@ class _MyWebViewTabState extends State<MyWebViewTab> {
         } else {
           print("onSslAuthError: unknown url}");
         }
-        error.proceed();
+        error.cancel();
       },
       onWebResourceError: (error) {
         mIsLoadingWeb.value = false;
-        print("onWebResourceError: ${error.description}");
+        print("onWebResourceError: ${error.url} => ${error.description}");
       },
+      /*
       onPageTitleChanged: (title) {
         // only works on Windows/Linux
         mTitle.value = title;
       },
+      */
     ));
 
     controller.addJavaScriptChannel("Flutter", onMessageReceived: (message) {
@@ -147,10 +150,12 @@ class _MyWebViewTabState extends State<MyWebViewTab> {
   }
 
   void testJavascript() async {
+    /*
     if (true) {
       controller.loadHtmlString(youtube_iframe, baseUrl: "https://www.dd.com/");
       return;
     }
+    */
 
     controller.runJavaScript("Flutter.postMessage('Chinese 中文')");
 
