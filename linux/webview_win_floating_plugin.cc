@@ -264,6 +264,16 @@ void createWebview(FlMethodChannel *method_channel, WebviewWinFloatingPlugin* se
                   "onSslAuthError", args, NULL, NULL, NULL);
   };
 
+  params.onWebResourceError = [=](const gchar *url, int errCode, const gchar *errType) -> void {
+    auto *args = fl_value_new_map();
+    fl_value_set(args, fl_value_new_string("webviewId"), fl_value_new_int(webviewId));
+    fl_value_set(args, fl_value_new_string("url"), fl_value_new_string(url));
+    fl_value_set(args, fl_value_new_string("errCode"), fl_value_new_int(errCode));
+    fl_value_set(args, fl_value_new_string("errType"), fl_value_new_string(errType));
+    fl_method_channel_invoke_method(FL_METHOD_CHANNEL(method_channel),
+                  "onWebResourceError", args, NULL, NULL, NULL);
+  };
+
   params.onUrlChange = [=](const gchar *url) -> void {
     auto *args = fl_value_new_map();
     fl_value_set(args, fl_value_new_string("webviewId"), fl_value_new_int(webviewId));

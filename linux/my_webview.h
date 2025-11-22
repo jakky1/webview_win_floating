@@ -19,6 +19,7 @@ public:
     std::function<void(const gchar *url)> onPageFinished;
     std::function<void(const gchar *url, int errCode)> onHttpError;
     std::function<void(const gchar *url)> onSslAuthError;
+	std::function<void(const gchar *url, int errCode, const gchar *errType)> onWebResourceError;	
     std::function<void(const gchar *url)> onUrlChange;
     std::function<void(const gchar *title)> onPageTitleChanged;
     std::function<void(gchar *channelName, gchar *msg)> onWebMessageReceived;
@@ -87,11 +88,12 @@ public:
 
 	// callbacks only used internally
 	gboolean on_decide_policy(WebKitPolicyDecision *decision, WebKitPolicyDecisionType decisionType);
+    MyWebViewCreateParams m_createParams;
+	gint m_load_failed_code = -1;
 
 private:
     std::map<std::string, _JsChannelInfo*> m_jsChannels;
     std::map<int, WebKitPolicyDecision*> m_navigationRequestMap;
-    MyWebViewCreateParams m_createParams;
 	bool m_hasNavigationDecision = false;
 
     GtkWidget* m_container; // GtkFixed

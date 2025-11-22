@@ -61,14 +61,28 @@ void MyWebView::allowNavigationDecision(int requestId, bool isAllowed) {
 }
 
 void on_load_changed(WebKitWebView *web_view, WebKitLoadEvent load_event, gpointer user_data) {
-    MyWebViewCreateParams *params = (MyWebViewCreateParams*) user_data;
+    MyWebView *me = (MyWebView*) user_data;
+    MyWebViewCreateParams *params = &me->m_createParams;
+
     const gchar *uri = webkit_web_view_get_uri(web_view);
     if (!uri || uri[0] == '\0') return;
 
     switch (load_event) {
-        case WEBKIT_LOAD_STARTED:
         case WEBKIT_LOAD_COMMITTED:
+            //g_print("on_load_changed: load_event = %d\n", load_event);
             params->onPageStarted(uri);
+
+            // if error occurs in 'on_load_failed', it is triggered before `onPageStarted`
+            // and no `onPageFinished` triggered
+            if (me->m_load_failed_code >= 0) {
+                if (me->m_load_failed_code == 2) { // ssl certification error
+                    params->onSslAuthError(uri);
+                } else {
+                    params->onWebResourceError(uri, -1, "unknown");
+                }
+                params->onPageFinished(uri);
+                me->m_load_failed_code = -1;
+            }
             break;
         case WEBKIT_LOAD_FINISHED: {        
             auto resource = webkit_web_view_get_main_resource(web_view);
@@ -81,22 +95,31 @@ void on_load_changed(WebKitWebView *web_view, WebKitLoadEvent load_event, gpoint
             } else {
                 // if http connected and server response error http code
                 params->onHttpError(uri, httpCode);
+                params->onPageFinished(uri);    
             }
         }
             break;
+        case WEBKIT_LOAD_STARTED:
         case WEBKIT_LOAD_REDIRECTED:
+            //g_print("on_load_changed: load_event = %d, %s\n", load_event, uri);
             break;
     }
 }
 
 gboolean on_load_failed(WebKitWebView *web_view, WebKitLoadEvent load_event, gchar *url,
                         GError *error, gpointer user_data) {
-    // if something error occurs before get http code from server                           
-    MyWebViewCreateParams *params = (MyWebViewCreateParams*) user_data;
-    params->onHttpError(url, -1);
-    return TRUE; // ignore default handler
+    MyWebView *me = (MyWebView*) user_data;
+
+    // TODO: how to get error code? error->code always 0 for non-ssl error...
+    me->m_load_failed_code = error->code;
+
+    // NOTE:
+    //   return TRUE:  no error page shown, this failed url won't added into url history, no 'onPageStarted' triggered
+    //   return FALSE: everything works well, but 'onPageStarted' will be traiggered later...
+    return FALSE; // fallback to default handler
 }
 
+/*
 gboolean on_load_failed_with_tls_error(
   WebKitWebView* web_view,
   gchar* url,
@@ -106,8 +129,9 @@ gboolean on_load_failed_with_tls_error(
 ) {
     MyWebViewCreateParams *params = (MyWebViewCreateParams*) user_data;
     params->onSslAuthError(url);
-    return TRUE; // ignore default handler
+    return FALSE; // fallback to default handler
 }
+*/
 
 void on_url_changed(WebKitWebView *web_view, GParamSpec *pspec, gpointer user_data)
 {
@@ -216,9 +240,9 @@ MyWebView::MyWebView(GtkWidget* container, MyWebViewCreateParams params, const g
 
     // listen webview events
     g_signal_connect(m_webview, "decide-policy", G_CALLBACK(::on_decide_policy), this);
-    g_signal_connect(m_webview, "load-changed", G_CALLBACK(on_load_changed), &m_createParams);
-    g_signal_connect(m_webview, "load-failed", G_CALLBACK(on_load_failed), &m_createParams);
-    g_signal_connect(m_webview, "load-failed-with-tls-errors", G_CALLBACK(on_load_failed_with_tls_error), &m_createParams);
+    g_signal_connect(m_webview, "load-changed", G_CALLBACK(on_load_changed), this);
+    g_signal_connect(m_webview, "load-failed", G_CALLBACK(on_load_failed), this);
+    //g_signal_connect(m_webview, "load-failed-with-tls-errors", G_CALLBACK(on_load_failed_with_tls_error), &m_createParams);
     //g_signal_connect(m_webview, "notify::estimated-load-progress", G_CALLBACK(on_progress), &m_createParams);
     g_signal_connect(m_webview, "notify::uri", G_CALLBACK(on_url_changed), &m_createParams);
     g_signal_connect(m_webview, "notify::title", G_CALLBACK(on_title_changed), &m_createParams);

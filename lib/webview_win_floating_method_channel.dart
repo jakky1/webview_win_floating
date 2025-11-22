@@ -4,6 +4,7 @@ import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:webview_flutter_platform_interface/webview_flutter_platform_interface.dart';
 
 import 'webview.dart';
 import 'webview_win_floating_platform_interface.dart';
@@ -75,6 +76,16 @@ class MethodChannelWebviewWinFloating extends WebviewWinFloatingPlatform {
       } else if (call.method == "onSslAuthError") {
         String url = call.arguments["url"]!;
         controller.notifyOnSslAuthError_(url);
+      } else if (call.method == "onWebResourceError") {
+        String url = call.arguments["url"]!;
+        int errCode = call.arguments["errCode"]!;
+        String errType = call.arguments["errType"]!;
+        var error = WebResourceError(
+            url: url,
+            errorCode: errCode,
+            description: errType,
+            errorType: WebResourceErrorType.values.byName(errType));
+        controller.notifyOnWebResourceError_(error);
       } else if (call.method == "onUrlChange") {
         String url = call.arguments["url"]!;
         controller.notifyOnUrlChange_(url);

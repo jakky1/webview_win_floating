@@ -364,6 +364,12 @@ class WinWebViewController {
     }
   }
 
+  void notifyOnWebResourceError_(WebResourceError error) {
+    if (_navigationDelegate.onWebResourceError != null) {
+      _navigationDelegate.onWebResourceError!(error);
+    }
+  }
+
   void notifyOnUrlChange_(String url) {
     _currentUrl = url;
     if (_navigationDelegate.onUrlChange == null) return;

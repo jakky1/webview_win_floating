@@ -260,34 +260,79 @@ MyWebViewImpl::MyWebViewImpl(HWND hWnd,
                             args->get_IsSuccess(&success);
                             if (success) {
                                 params.onPageFinished(url);
-                            } else {
-                                int errCode = 0;
-                                wil::com_ptr<ICoreWebView2NavigationCompletedEventArgs> _args = args;
-                                auto args2 = _args.query<ICoreWebView2NavigationCompletedEventArgs2>();
-                                args2->get_HttpStatusCode(&errCode);
+                                return S_OK;
+                            }
 
-                                if (errCode == 0) { // no http status code found
-                                    COREWEBVIEW2_WEB_ERROR_STATUS webErrorStatus;
-                                    args->get_WebErrorStatus(&webErrorStatus);
-                                    errCode = webErrorStatus;
+                            int errCode = 0;
+                            wil::com_ptr<ICoreWebView2NavigationCompletedEventArgs> _args = args;
+                            auto args2 = _args.query<ICoreWebView2NavigationCompletedEventArgs2>();
+                            args2->get_HttpStatusCode(&errCode);
 
-                                    switch (errCode) {
-                                        case COREWEBVIEW2_WEB_ERROR_STATUS_OPERATION_CANCELED:
-                                            // user cancel navigation, or deny navigation. 
-                                            // ignore this error
-                                            return S_OK;
-                                        case COREWEBVIEW2_WEB_ERROR_STATUS_CERTIFICATE_COMMON_NAME_IS_INCORRECT:
-                                        case COREWEBVIEW2_WEB_ERROR_STATUS_CERTIFICATE_EXPIRED:
-                                        case COREWEBVIEW2_WEB_ERROR_STATUS_CLIENT_CERTIFICATE_CONTAINS_ERRORS:
-                                        case COREWEBVIEW2_WEB_ERROR_STATUS_CERTIFICATE_REVOKED:
-                                        case COREWEBVIEW2_WEB_ERROR_STATUS_CERTIFICATE_IS_INVALID:
-                                            // for SSL certificate error
-                                            params.onSslAuthError(url);
-                                            return S_OK;
-                                    }
-                                }
+                            if (errCode != 0) { // no http status code found
+                                params.onHttpError(url, errCode);                                    
+                                params.onPageFinished(url);
+                                return S_OK;
+                            }
 
-                                params.onHttpError(url, errCode);
+                            COREWEBVIEW2_WEB_ERROR_STATUS webErrorStatus;
+                            args->get_WebErrorStatus(&webErrorStatus);
+                            errCode = webErrorStatus;
+
+                            // SSL certification error
+                            switch (errCode) {
+                                case COREWEBVIEW2_WEB_ERROR_STATUS_OPERATION_CANCELED:
+                                    // user cancel navigation, or deny navigation. 
+                                    // ignore this error
+                                    return S_OK;
+                                case COREWEBVIEW2_WEB_ERROR_STATUS_CERTIFICATE_COMMON_NAME_IS_INCORRECT:
+                                case COREWEBVIEW2_WEB_ERROR_STATUS_CERTIFICATE_EXPIRED:
+                                case COREWEBVIEW2_WEB_ERROR_STATUS_CLIENT_CERTIFICATE_CONTAINS_ERRORS:
+                                case COREWEBVIEW2_WEB_ERROR_STATUS_CERTIFICATE_REVOKED:
+                                case COREWEBVIEW2_WEB_ERROR_STATUS_CERTIFICATE_IS_INVALID:
+                                    // for SSL certificate error
+                                    params.onSslAuthError(url);
+                                    params.onPageFinished(url);
+                                    return S_OK;
+                            }
+
+                            // other non-http and non-ssl error
+                            const char *errType = NULL;
+                            switch (errCode) {
+                                case COREWEBVIEW2_WEB_ERROR_STATUS_SERVER_UNREACHABLE:
+                                    errType = "hostLookup";
+                                    break;
+                                case COREWEBVIEW2_WEB_ERROR_STATUS_TIMEOUT:
+                                    errType = "timeout";
+                                    break;
+                                case COREWEBVIEW2_WEB_ERROR_STATUS_CONNECTION_ABORTED:
+                                case COREWEBVIEW2_WEB_ERROR_STATUS_CONNECTION_RESET:
+                                case COREWEBVIEW2_WEB_ERROR_STATUS_DISCONNECTED:
+                                case COREWEBVIEW2_WEB_ERROR_STATUS_CANNOT_CONNECT:
+                                    errType = "connect";
+                                    break;
+                                case COREWEBVIEW2_WEB_ERROR_STATUS_HOST_NAME_NOT_RESOLVED:
+                                    errType = "hostLookup";
+                                    break;
+                                case COREWEBVIEW2_WEB_ERROR_STATUS_REDIRECT_FAILED:
+                                    errType = "redirectLoop";
+                                    break;
+                                case COREWEBVIEW2_WEB_ERROR_STATUS_VALID_AUTHENTICATION_CREDENTIALS_REQUIRED:
+                                    errType = "authentication";
+                                    break;
+                                case COREWEBVIEW2_WEB_ERROR_STATUS_VALID_PROXY_AUTHENTICATION_REQUIRED:
+                                    errType = "proxyAuthentication";
+                                    break;
+                                case COREWEBVIEW2_WEB_ERROR_STATUS_ERROR_HTTP_INVALID_SERVER_RESPONSE:
+                                case COREWEBVIEW2_WEB_ERROR_STATUS_OPERATION_CANCELED:
+                                case COREWEBVIEW2_WEB_ERROR_STATUS_UNEXPECTED_ERROR:
+                                default:
+                                    errType = "unknown";
+                                    break;
+                            }
+                            if (errType != NULL) {
+                                // std::cout << "[native] errCode: " << errCode << std::endl;
+                                params.onWebResourceError(url, errCode, errType);
+                                params.onPageFinished(url);
                             }
 
                             return S_OK;

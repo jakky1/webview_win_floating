@@ -121,6 +121,15 @@ void createWebview(const flutter::MethodCall<flutter::EncodableValue> &method_ca
     gMethodChannel->InvokeMethod("onSslAuthError", std::make_unique<flutter::EncodableValue>(arguments));
   };
 
+  params.onWebResourceError = [webviewId](std::string url, int errCode, std::string errType) -> void {
+    flutter::EncodableMap arguments;
+    arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
+    arguments[flutter::EncodableValue("url")] = flutter::EncodableValue(url);
+    arguments[flutter::EncodableValue("errCode")] = flutter::EncodableValue(errCode);
+    arguments[flutter::EncodableValue("errType")] = flutter::EncodableValue(errType);
+    gMethodChannel->InvokeMethod("onWebResourceError", std::make_unique<flutter::EncodableValue>(arguments));
+  };
+
   params.onUrlChange = [webviewId](std::string url) -> void {
     flutter::EncodableMap arguments;
     arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);

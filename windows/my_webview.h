@@ -21,6 +21,7 @@ public:
 	std::function<void(std::string url)> onPageFinished;
 	std::function<void(std::string url, int errCode)> onHttpError;	
 	std::function<void(std::string url)> onSslAuthError;	
+	std::function<void(std::string url, int errCode, std::string errType)> onWebResourceError;	
 	std::function<void(std::string)> onUrlChange;
 	std::function<void(std::string)> onPageTitleChanged;
 	std::function<void(std::string)> onWebMessageReceived;
