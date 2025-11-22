@@ -26,4 +26,6 @@ runJavaScriptReturningResult("var c = {'type':true, 'model':9}; c;"); // return 
 
 ## NavigationDelegate.onWebResourceError
 
-In the old version of `webview_flutter` package only supported `onWebResourceError`. However, the newer versions of `webview_flutter` introduced `onHttpError` and `onSslAuthError`. As a result, certain web errors that previously triggered `onWebResourceError`, such as `404 Not Found` and `expired SSL certificate` errors, will now call `onHttpError` and `onSslAuthError` instead.
+In the old version of `webview_flutter` package only supported `onWebResourceError`. However, the newer versions of `webview_flutter` introduced `onHttpError` and `onSslAuthError`. As a result:
+* certain web errors that previously triggered `onWebResourceError`, such as `404 Not Found` and `expired SSL certificate` errors, will now call `onHttpError` and `onSslAuthError` instead.
+* Any non-ssl error and non-http error, such as `hostname not found` and `connect timeout`, still call `onWebResourceError`.

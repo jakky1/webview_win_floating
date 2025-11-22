@@ -1,3 +1,10 @@
+## 3.0.1
+
+* See [BREAKING CHANGES](https://github.com/jakky1/webview_win_floating/blob/master/BREAKING_CHANGES.md) for details.
+
+    * Fix: return type of runJavaScriptReturningResult(). 
+    * implement NavigationDelegate.onWebResourceError(). 
+
 ## 3.0.0
 
 * Support Linux platform.
