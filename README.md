@@ -154,8 +154,9 @@ myChannelName.postMessage("This message is from javascript");
 - onPageStarted
 - onPageFinished
 - onUrlChange
-- onHttpError (e.g. 403 Not Found)
+- onHttpError (e.g. 404 Not Found)
 - onSslAuthError (e.g. SSL certification expired, revoked, untrust)
+- onWebResourceError (for non-ssl error and non-http error. e.g. connect timeout, hostname not found)
 
 ```dart
 controller.setNavigationDelegate(NavigationDelegate(
@@ -181,6 +182,9 @@ controller.setNavigationDelegate(NavigationDelegate(
       print("onSslAuthError: unknown url}");
     }
     error.cancel();
+  },
+  onWebResourceError: (error) {
+    print("onWebResourceError: ${error.url} => ${error.description}");
   },
 ));
 ```
