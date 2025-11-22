@@ -106,17 +106,11 @@ controller.setJavaScriptMode(JavaScriptMode.unrestricted);
 For example, to disable the facebook / twitter links in youtube website:
 ```dart
 controller.setNavigationDelegate(NavigationDelegate(
-
   onNavigationRequest: (request) {
     return request.url.contains("youtube")
       ? NavigationDecision.navigate
       : NavigationDecision.prevent;
   },
-
-  onPageStarted: (url) => print("onPageStarted: $url"),
-  onPageFinished: (url) => print("onPageFinished: $url"),
-  onWebResourceError: (error) =>
-      print("onWebResourceError: ${error.description}"),
 ));
 ```
 
