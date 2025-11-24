@@ -453,7 +453,7 @@ void MyWebViewImpl::grantPermission(int deferralId, BOOL isGranted)
 MyWebViewImpl::~MyWebViewImpl()
 {
     m_pController->Close();
-    std::cout << "MyWebViewImpl::~MyWebViewImpl()\n";
+    std::cout << "[webview_win_floating] MyWebViewImpl::~MyWebViewImpl()" << std::endl;
 }
 
 void MyWebViewImpl::setHasNavigationDecision(bool hasNavigationDecision)

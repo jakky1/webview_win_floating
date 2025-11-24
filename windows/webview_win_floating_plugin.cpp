@@ -16,10 +16,6 @@
 // Jacky {
 #include "my_webview.h"
 
-HWND g_NativeHWND = 0;
-flutter::MethodChannel<flutter::EncodableValue>* gMethodChannel = NULL;
-std::map<int, MyWebView*> webviewMap;
-
 #define toWideString(str) std::wstring(str.begin(), str.end()).c_str()
 std::shared_ptr<WCHAR[]> utf8ToUtf16(std::string str8) {
   int arrSize = (int) str8.length() + 1;
@@ -36,8 +32,6 @@ std::shared_ptr<WCHAR[]> utf8ToUtf16(std::string str8) {
 
 namespace webview_win_floating {
 
-// static
-flutter::PluginRegistrarWindows *g_registrar; // Jacky
 void WebviewWinFloatingPlugin::RegisterWithRegistrar(
     flutter::PluginRegistrarWindows *registrar) {
   auto channel =
@@ -52,28 +46,31 @@ void WebviewWinFloatingPlugin::RegisterWithRegistrar(
         plugin_pointer->HandleMethodCall(call, std::move(result));
       });
 
-  registrar->AddPlugin(std::move(plugin));
+  //Jacky {
+  plugin->m_nativeHWND = registrar->GetView()->GetNativeWindow();
+  plugin->m_MethodChannel = std::move(channel);
+  // Jacky }
 
-  g_registrar = registrar; //Jacky
-  g_NativeHWND = GetAncestor(registrar->GetView()->GetNativeWindow(), GA_ROOT); //Jacky
-  gMethodChannel = new flutter::MethodChannel<flutter::EncodableValue>(registrar->messenger(), "webview_win_floating",
-          &flutter::StandardMethodCodec::GetInstance()); //Jacky
+  registrar->AddPlugin(std::move(plugin));
 }
 
 WebviewWinFloatingPlugin::WebviewWinFloatingPlugin() {}
 
-WebviewWinFloatingPlugin::~WebviewWinFloatingPlugin() {}
+WebviewWinFloatingPlugin::~WebviewWinFloatingPlugin() {
+  std::cout << "[webview_win_floating] ~WebviewWinFloatingPlugin(): plugin disposing now" << std::endl;
+  destroyAllWebViews();
+}
 
-void createWebview(const flutter::MethodCall<flutter::EncodableValue> &method_call,
+void WebviewWinFloatingPlugin::createWebview(const flutter::MethodCall<flutter::EncodableValue> &method_call,
     std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> &result,
     int webviewId, std::string url, std::string userDataFolder) {
 
   std::shared_ptr<flutter::MethodResult<flutter::EncodableValue>> shared_result = std::move(result);
   MyWebViewCreateParams params;
 
-  params.onCreated = [shared_result, webviewId, url](HRESULT hr, MyWebView *webview) -> void {
+  params.onCreated = [=](HRESULT hr, MyWebView *webview) -> void {
     if (webview != NULL) {
-      webviewMap[webviewId] = webview;
+      m_webviewMap[webviewId] = webview;
       std::cout << "[webview] native create: id = " << webviewId << std::endl;
       if (!url.empty()) webview->loadUrl(toWideString(url));
       shared_result->Success(flutter::EncodableValue(true));
@@ -83,79 +80,79 @@ void createWebview(const flutter::MethodCall<flutter::EncodableValue> &method_ca
     }
   };
 
-  params.onNavigationRequest = [webviewId](int requestId, std::string url, bool isNewWindow) -> void {
+  params.onNavigationRequest = [=](int requestId, std::string url, bool isNewWindow) -> void {
     flutter::EncodableMap arguments;
     arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
     arguments[flutter::EncodableValue("requestId")] = flutter::EncodableValue(requestId);
     arguments[flutter::EncodableValue("url")] = flutter::EncodableValue(url);
     arguments[flutter::EncodableValue("isNewWindow")] = flutter::EncodableValue(isNewWindow);
-    gMethodChannel->InvokeMethod("onNavigationRequest", std::make_unique<flutter::EncodableValue>(arguments));
+    m_MethodChannel->InvokeMethod("onNavigationRequest", std::make_unique<flutter::EncodableValue>(arguments));
   };
   
-  params.onPageStarted = [webviewId, params](std::string url) -> void {
+  params.onPageStarted = [=](std::string url) -> void {
     flutter::EncodableMap arguments;
     arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
     arguments[flutter::EncodableValue("url")] = flutter::EncodableValue(url);
-    gMethodChannel->InvokeMethod("onPageStarted", std::make_unique<flutter::EncodableValue>(arguments));
+    m_MethodChannel->InvokeMethod("onPageStarted", std::make_unique<flutter::EncodableValue>(arguments));
   };
   
-  params.onPageFinished = [webviewId](std::string url) -> void {
+  params.onPageFinished = [=](std::string url) -> void {
     flutter::EncodableMap arguments;
     arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
     arguments[flutter::EncodableValue("url")] = flutter::EncodableValue(url);
-    gMethodChannel->InvokeMethod("onPageFinished", std::make_unique<flutter::EncodableValue>(arguments));
+    m_MethodChannel->InvokeMethod("onPageFinished", std::make_unique<flutter::EncodableValue>(arguments));
   };
   
-  params.onHttpError = [webviewId](std::string url, int errCode) -> void {
+  params.onHttpError = [=](std::string url, int errCode) -> void {
     flutter::EncodableMap arguments;
     arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
     arguments[flutter::EncodableValue("url")] = flutter::EncodableValue(url);
     arguments[flutter::EncodableValue("errCode")] = flutter::EncodableValue(errCode);
-    gMethodChannel->InvokeMethod("onHttpError", std::make_unique<flutter::EncodableValue>(arguments));
+    m_MethodChannel->InvokeMethod("onHttpError", std::make_unique<flutter::EncodableValue>(arguments));
   };
   
-  params.onSslAuthError = [webviewId](std::string url) -> void {
+  params.onSslAuthError = [=](std::string url) -> void {
     flutter::EncodableMap arguments;
     arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
     arguments[flutter::EncodableValue("url")] = flutter::EncodableValue(url);
-    gMethodChannel->InvokeMethod("onSslAuthError", std::make_unique<flutter::EncodableValue>(arguments));
+    m_MethodChannel->InvokeMethod("onSslAuthError", std::make_unique<flutter::EncodableValue>(arguments));
   };
 
-  params.onWebResourceError = [webviewId](std::string url, int errCode, std::string errType) -> void {
+  params.onWebResourceError = [=](std::string url, int errCode, std::string errType) -> void {
     flutter::EncodableMap arguments;
     arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
     arguments[flutter::EncodableValue("url")] = flutter::EncodableValue(url);
     arguments[flutter::EncodableValue("errCode")] = flutter::EncodableValue(errCode);
     arguments[flutter::EncodableValue("errType")] = flutter::EncodableValue(errType);
-    gMethodChannel->InvokeMethod("onWebResourceError", std::make_unique<flutter::EncodableValue>(arguments));
+    m_MethodChannel->InvokeMethod("onWebResourceError", std::make_unique<flutter::EncodableValue>(arguments));
   };
 
-  params.onUrlChange = [webviewId](std::string url) -> void {
+  params.onUrlChange = [=](std::string url) -> void {
     flutter::EncodableMap arguments;
     arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
     arguments[flutter::EncodableValue("url")] = flutter::EncodableValue(url);
-    gMethodChannel->InvokeMethod("onUrlChange", std::make_unique<flutter::EncodableValue>(arguments));
+    m_MethodChannel->InvokeMethod("onUrlChange", std::make_unique<flutter::EncodableValue>(arguments));
   };
 
-  params.onPageTitleChanged = [webviewId](std::string title) -> void {
+  params.onPageTitleChanged = [=](std::string title) -> void {
     flutter::EncodableMap arguments;
     arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
     arguments[flutter::EncodableValue("title")] = flutter::EncodableValue(title);
-    gMethodChannel->InvokeMethod("onPageTitleChanged", std::make_unique<flutter::EncodableValue>(arguments));
+    m_MethodChannel->InvokeMethod("onPageTitleChanged", std::make_unique<flutter::EncodableValue>(arguments));
   };
   
   params.onWebMessageReceived = [=](std::string message) -> void {
     flutter::EncodableMap arguments;
     arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
     arguments[flutter::EncodableValue("message")] = flutter::EncodableValue(message);
-    gMethodChannel->InvokeMethod("OnWebMessageReceived", std::make_unique<flutter::EncodableValue>(arguments));
+    m_MethodChannel->InvokeMethod("OnWebMessageReceived", std::make_unique<flutter::EncodableValue>(arguments));
   };
   
   params.onMoveFocusRequest = [=](bool isNext) -> void {
     flutter::EncodableMap arguments;
     arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
     arguments[flutter::EncodableValue("isNext")] = flutter::EncodableValue(isNext);
-    gMethodChannel->InvokeMethod("onMoveFocusRequest", std::make_unique<flutter::EncodableValue>(arguments));
+    m_MethodChannel->InvokeMethod("onMoveFocusRequest", std::make_unique<flutter::EncodableValue>(arguments));
   };
   
   params.onFullScreenChanged = [=](BOOL isFullScreen) -> void {
@@ -163,13 +160,13 @@ void createWebview(const flutter::MethodCall<flutter::EncodableValue> &method_ca
     flutter::EncodableMap arguments;
     arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
     arguments[flutter::EncodableValue("isFullScreen")] = flutter::EncodableValue(isFullScreen ? true : false);
-    gMethodChannel->InvokeMethod("OnFullScreenChanged", std::make_unique<flutter::EncodableValue>(arguments));
+    m_MethodChannel->InvokeMethod("OnFullScreenChanged", std::make_unique<flutter::EncodableValue>(arguments));
   };
   
   params.onHistoryChanged = [=]() -> void {
     flutter::EncodableMap arguments;
     arguments[flutter::EncodableValue("webviewId")] = flutter::EncodableValue(webviewId);
-    gMethodChannel->InvokeMethod("onHistoryChanged", std::make_unique<flutter::EncodableValue>(arguments));
+    m_MethodChannel->InvokeMethod("onHistoryChanged", std::make_unique<flutter::EncodableValue>(arguments));
   };
   
   params.onAskPermission = [=](std::string url, int kind, int deferralId) -> void {
@@ -178,7 +175,7 @@ void createWebview(const flutter::MethodCall<flutter::EncodableValue> &method_ca
     arguments[flutter::EncodableValue("url")] = flutter::EncodableValue(url);
     arguments[flutter::EncodableValue("kind")] = flutter::EncodableValue(kind);
     arguments[flutter::EncodableValue("deferralId")] = flutter::EncodableValue(deferralId);
-    gMethodChannel->InvokeMethod("onAskPermission", std::make_unique<flutter::EncodableValue>(arguments));
+    m_MethodChannel->InvokeMethod("onAskPermission", std::make_unique<flutter::EncodableValue>(arguments));
   };
 
   PCWSTR pwUserDataFolder = NULL;
@@ -192,7 +189,15 @@ void createWebview(const flutter::MethodCall<flutter::EncodableValue> &method_ca
     }
   }
 
-  MyWebView::Create(g_NativeHWND, params, pwUserDataFolder);
+  MyWebView::Create(m_nativeHWND, params, pwUserDataFolder);
+}
+
+void WebviewWinFloatingPlugin::destroyAllWebViews() {
+  for(auto iter = m_webviewMap.begin(); iter != m_webviewMap.end(); iter++) {
+    std::cout << "[webview_win_floating] old webview found, deleting id = " << iter->first << std::endl;
+    delete iter->second;
+  }
+  m_webviewMap.clear();
 }
 
 void WebviewWinFloatingPlugin::HandleMethodCall(
@@ -203,11 +208,7 @@ void WebviewWinFloatingPlugin::HandleMethodCall(
 
   if (method_call.method_name().compare("init") == 0) {
     // called when hot-restart in debug mode, and clear all the old webviews which created before hot-restart
-    for(auto iter = webviewMap.begin(); iter != webviewMap.end(); iter++) {
-      std::cout << "[webview_win_floating] old webview found, deleting" << std::endl;
-      delete iter->second;
-    }
-    webviewMap.clear();
+    destroyAllWebViews();
     result->Success();
     return;
   }
@@ -216,7 +217,7 @@ void WebviewWinFloatingPlugin::HandleMethodCall(
   auto webviewId = std::get<int>(arguments[flutter::EncodableValue("webviewId")]);
 
   bool isCreateCall = method_call.method_name().compare("create") == 0;
-  auto webview = webviewMap[webviewId];
+  auto webview = m_webviewMap[webviewId];
   if (webview == NULL && !isCreateCall) {
     result->Error("webview hasn't created");
     return;
@@ -355,7 +356,7 @@ void WebviewWinFloatingPlugin::HandleMethodCall(
   } else if (method_call.method_name().compare("dispose") == 0) {
     if (webview != NULL) {
       delete webview; //TODO:...
-      webviewMap.erase(webviewId);
+      m_webviewMap.erase(webviewId);
       std::cout << "[webview] native dispose: id = " << webviewId << std::endl;
     }
     result->Success(flutter::EncodableValue(true));

@@ -1,3 +1,4 @@
+import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_win_floating/webview_win_floating.dart';
@@ -6,8 +7,20 @@ import 'package:webview_win_floating/webview_win_floating.dart';
 //typedef WebViewWidget = WinWebViewWidget;
 //typedef NavigationDelegate = WinNavigationDelegate;
 
-void main() {
+Future<void> main(List<String> args) async {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
+}
+
+Future<void> createNewWindow() async {
+  final controller = await WindowController.create(
+    const WindowConfiguration(
+      hiddenAtLaunch: true,
+      arguments: '',
+    ),
+  );
+
+  await controller.show();
 }
 
 class MyApp extends StatelessWidget {
@@ -192,6 +205,7 @@ class _MyWebViewTabState extends State<MyWebViewTab> {
       },
     );
     Widget buttonRow = Row(children: [
+      const MyCircleButton(icon: Icons.add, onTap: createNewWindow),
       MyCircleButton(icon: Icons.question_mark, onTap: showOrHide),
       MyCircleButton(icon: Icons.javascript, onTap: testJavascript),
       MyCircleButton(icon: Icons.arrow_back, onTap: controller.goBack),

@@ -160,7 +160,7 @@ void initWidgetContainer(WebviewWinFloatingPlugin* self) {
   // get FLView (flutter view)
   GtkWindow *window = get_window(self);
   self->flView = gtk_bin_get_child(GTK_BIN(window));
-  
+
   // NOTE: my_fixed_get_type() is a custom GtkFixedWidget. It support:
   //   - can assign a 'main_widget' and make it always fill parent size
   //   - make natural size as zero in get_preferred_width() and get_preferred_height()
@@ -202,20 +202,34 @@ void initWidgetContainer(WebviewWinFloatingPlugin* self) {
   gtk_widget_set_can_focus(self->flView, TRUE);
   gtk_widget_set_focus_on_click(self->flView, TRUE);
   gtk_widget_grab_focus(GTK_WIDGET(self->flView));
+
+
+  // NOTE: 
+  // ref: https://github.com/MixinNetwork/flutter-plugins/blob/main/packages/desktop_multi_window/linux/multi_window_manager.cc
+  // Issues from flutter/engine: https://github.com/flutter/engine/pull/40033
+  // Prevent delete-event from flutter engine shell, which will quit the whole
+  // appplication when the window is closed.
+  guint handler_id = g_signal_handler_find(window, G_SIGNAL_MATCH_DATA, 0, 0, NULL, NULL, self->flView);
+  if (handler_id > 0) {
+    g_signal_handler_disconnect(window, handler_id);
+  }  
 }
 
 void cb_delete_webview(gpointer key, gpointer value, gpointer user_data) {
-  g_print("[webview_win_floating] old webview found, deleting");
+  g_print("[webview_win_floating] old webview found, deleting\n");
   delete (MyWebView*)value;
 }
 
-void onInit(WebviewWinFloatingPlugin* self) {
-  initWidgetContainer(self);
-
+void destroyAllWebViews(WebviewWinFloatingPlugin* self) {
   // clear all webview in map
   g_hash_table_foreach(self->webviewMap, cb_delete_webview, NULL);
   g_hash_table_destroy(self->webviewMap);
   self->webviewMap = g_hash_table_new(g_direct_hash, g_direct_equal);
+}
+
+void onInit(WebviewWinFloatingPlugin* self) {
+  initWidgetContainer(self);
+  destroyAllWebViews(self);
 }
 
 void createWebview(FlMethodChannel *method_channel, WebviewWinFloatingPlugin* self, int webviewId, const gchar* url, const gchar* userDataFolder) {
@@ -487,6 +501,10 @@ static void webview_win_floating_plugin_handle_method_call(
 }
 
 static void webview_win_floating_plugin_dispose(GObject* object) {
+  g_print("[webview_win_floating] plugin disposing now\n");
+  WebviewWinFloatingPlugin *plugin = WEBVIEW_WIN_FLOATING_PLUGIN(object);
+  destroyAllWebViews(plugin);
+
   G_OBJECT_CLASS(webview_win_floating_plugin_parent_class)->dispose(object);
 }
 

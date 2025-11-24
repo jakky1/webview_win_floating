@@ -255,6 +255,7 @@ MyWebView::MyWebView(GtkWidget* container, MyWebViewCreateParams params, const g
 }
 
 MyWebView::~MyWebView() {
+    g_print("[webview_win_floating] ~MyWebView() deleted\n");
     gtk_widget_destroy(m_webview);
 }
 

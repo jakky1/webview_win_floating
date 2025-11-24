@@ -6,6 +6,12 @@
 
 #include <memory>
 
+// Jacky {
+#include <windows.h>
+#include <map>
+#include "my_webview.h"
+// Jacky }
+
 namespace webview_win_floating {
 
 class WebviewWinFloatingPlugin : public flutter::Plugin {
@@ -25,6 +31,18 @@ class WebviewWinFloatingPlugin : public flutter::Plugin {
   void HandleMethodCall(
       const flutter::MethodCall<flutter::EncodableValue> &method_call,
       std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
+
+
+  // Jacky {
+  HWND m_nativeHWND;
+  std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>> m_MethodChannel;
+  std::map<int, MyWebView*> m_webviewMap;
+
+  void WebviewWinFloatingPlugin::createWebview(const flutter::MethodCall<flutter::EncodableValue> &method_call,
+    std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> &result,
+    int webviewId, std::string url, std::string userDataFolder);
+  void destroyAllWebViews();
+  // Jacky }
 };
 
 }  // namespace webview_win_floating
