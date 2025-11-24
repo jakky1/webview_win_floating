@@ -1,3 +1,7 @@
+## 3.0.2
+
+* Support multi window with package `desktop_multi_window`
+
 ## 3.0.1
 
 * See [BREAKING CHANGES](https://github.com/jakky1/webview_win_floating/blob/master/BREAKING_CHANGES.md) for details.

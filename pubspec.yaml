@@ -3,7 +3,7 @@ description: WebView for Windows / Linux. A Flutter plugin that implements the i
 homepage: https://github.com/jakky1/webview_win_floating
 repository: https://github.com/jakky1/webview_win_floating
 issue_tracker: https://github.com/jakky1/webview_win_floating/issues
-version: 3.0.1
+version: 3.0.2
 
 environment:
   sdk: '>=3.0.0 < 4.0.0'
