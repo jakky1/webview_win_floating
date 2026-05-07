@@ -112,8 +112,9 @@ private:
     wil::com_ptr<ICoreWebView2Controller> m_pController;
     wil::com_ptr<ICoreWebView2Settings> m_pSettings;
     RECT m_bounds = { 0,0,0,0 };
+    std::wstring m_folderKey;
 };
-wil::com_ptr<ICoreWebView2Environment> g_env;
+std::map<std::wstring, wil::com_ptr<ICoreWebView2Environment>> g_envs;
 
 // --------------------------------------------------------------------------
 
@@ -126,15 +127,18 @@ MyWebView* MyWebView::Create(HWND hWnd,
 
 HRESULT InitWebViewRuntime(PCWSTR pwUserDataFolder, std::function<void(HRESULT)> callback = nullptr)
 {
-    if (g_env != NULL) {
+    std::wstring folderKey = pwUserDataFolder == nullptr ? L"" : pwUserDataFolder;
+    if (g_envs.find(folderKey) != g_envs.end()) {
         if (callback != nullptr) callback(S_OK);
         return S_OK;
     }
 
     return CreateCoreWebView2EnvironmentWithOptions(nullptr, pwUserDataFolder, nullptr,
         Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
-            [callback](HRESULT result, ICoreWebView2Environment* env) -> HRESULT {
-                g_env = env;
+            [callback, folderKey](HRESULT result, ICoreWebView2Environment* env) -> HRESULT {
+                if (result == S_OK) {
+                    g_envs[folderKey] = env;
+                }
                 if (callback != nullptr) callback(result);
                 return result;
             }).Get());
@@ -149,13 +153,14 @@ MyWebViewImpl::MyWebViewImpl(HWND hWnd,
     MyWebViewCreateParams params,
     PCWSTR pwUserDataFolder = NULL) : m_params(params)
 {
+    m_folderKey = pwUserDataFolder == nullptr ? L"" : pwUserDataFolder;
     InitWebViewRuntime(pwUserDataFolder, [=](HRESULT hr) -> void {
         if (hr != S_OK) {
             params.onCreated(hr, NULL);
             return;
         }
 
-        g_env->CreateCoreWebView2Controller(hWnd, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
+        g_envs[m_folderKey]->CreateCoreWebView2Controller(hWnd, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
             [=](HRESULT hr, ICoreWebView2Controller* controller) -> HRESULT {
                 if (hr != S_OK) {
                     params.onCreated(hr, NULL);
@@ -453,6 +458,7 @@ void MyWebViewImpl::grantPermission(int deferralId, BOOL isGranted)
 MyWebViewImpl::~MyWebViewImpl()
 {
     m_pController->Close();
+    g_envs.erase(m_folderKey);
     std::cout << "[webview_win_floating] MyWebViewImpl::~MyWebViewImpl()" << std::endl;
 }
 
