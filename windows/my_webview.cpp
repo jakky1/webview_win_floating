@@ -40,7 +40,8 @@ class MyWebViewImpl : public MyWebView
 public:
     MyWebViewImpl(HWND hWnd,
         MyWebViewCreateParams params,
-        PCWSTR pwUserDataFolder);
+        PCWSTR pwUserDataFolder,
+        PCWSTR pwProfileName);
 
     virtual ~MyWebViewImpl() override;
 
@@ -112,32 +113,31 @@ private:
     wil::com_ptr<ICoreWebView2Controller> m_pController;
     wil::com_ptr<ICoreWebView2Settings> m_pSettings;
     RECT m_bounds = { 0,0,0,0 };
-    std::wstring m_folderKey;
 };
-std::map<std::wstring, wil::com_ptr<ICoreWebView2Environment>> g_envs;
+wil::com_ptr<ICoreWebView2Environment> g_env;
 
 // --------------------------------------------------------------------------
 
 MyWebView* MyWebView::Create(HWND hWnd,
     MyWebViewCreateParams params,
-    PCWSTR pwUserDataFolder)
+    PCWSTR pwUserDataFolder,
+    PCWSTR pwProfileName)
 {
-    return new MyWebViewImpl(hWnd, params, pwUserDataFolder);
+    return new MyWebViewImpl(hWnd, params, pwUserDataFolder, pwProfileName);
 }
 
 HRESULT InitWebViewRuntime(PCWSTR pwUserDataFolder, std::function<void(HRESULT)> callback = nullptr)
 {
-    std::wstring folderKey = pwUserDataFolder == nullptr ? L"" : pwUserDataFolder;
-    if (g_envs.find(folderKey) != g_envs.end()) {
+    if (g_env != NULL) {
         if (callback != nullptr) callback(S_OK);
         return S_OK;
     }
 
     return CreateCoreWebView2EnvironmentWithOptions(nullptr, pwUserDataFolder, nullptr,
         Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
-            [callback, folderKey](HRESULT result, ICoreWebView2Environment* env) -> HRESULT {
+            [callback](HRESULT result, ICoreWebView2Environment* env) -> HRESULT {
                 if (result == S_OK) {
-                    g_envs[folderKey] = env;
+                    g_env = env;
                 }
                 if (callback != nullptr) callback(result);
                 return result;
@@ -151,16 +151,19 @@ HRESULT ReleaseWebViewRuntime()
 
 MyWebViewImpl::MyWebViewImpl(HWND hWnd,
     MyWebViewCreateParams params,
-    PCWSTR pwUserDataFolder = NULL) : m_params(params)
+    PCWSTR pwUserDataFolder = NULL,
+    PCWSTR pwProfileName = NULL) : m_params(params)
 {
-    m_folderKey = pwUserDataFolder == nullptr ? L"" : pwUserDataFolder;
+    std::wstring profileName = (pwProfileName != NULL) ? pwProfileName : L"";
+
     InitWebViewRuntime(pwUserDataFolder, [=](HRESULT hr) -> void {
         if (hr != S_OK) {
             params.onCreated(hr, NULL);
             return;
         }
 
-        g_envs[m_folderKey]->CreateCoreWebView2Controller(hWnd, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
+        // Lambda that handles the controller after creation (shared by both paths)
+        auto onControllerCreated = Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
             [=](HRESULT hr, ICoreWebView2Controller* controller) -> HRESULT {
                 if (hr != S_OK) {
                     params.onCreated(hr, NULL);
@@ -420,7 +423,29 @@ MyWebViewImpl::MyWebViewImpl(HWND hWnd,
 
                 params.onCreated(hr, this);
                 return hr;
-            }).Get());
+            });
+
+        // If a profileName is specified, use ICoreWebView2Environment10 to create
+        // a controller with profile-based isolation (shared process, separate sessions).
+        // See: https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/multi-profile-support
+        if (!profileName.empty()) {
+            auto env10 = g_env.try_query<ICoreWebView2Environment10>();
+            if (env10 != NULL) {
+                wil::com_ptr<ICoreWebView2ControllerOptions> options;
+                HRESULT optHr = env10->CreateCoreWebView2ControllerOptions(&options);
+                if (SUCCEEDED(optHr) && options != NULL) {
+                    options->put_ProfileName(profileName.c_str());
+                    env10->CreateCoreWebView2ControllerWithOptions(hWnd, options.get(), onControllerCreated.Get());
+                    return;
+                }
+                std::cout << "[webview_win_floating] CreateCoreWebView2ControllerOptions failed, falling back to default controller" << std::endl;
+            } else {
+                std::cout << "[webview_win_floating] ICoreWebView2Environment10 not available, profileName ignored" << std::endl;
+            }
+        }
+
+        // Standard path: no profile name, or profile API unavailable
+        g_env->CreateCoreWebView2Controller(hWnd, onControllerCreated.Get());
         });
 }
 
@@ -458,7 +483,6 @@ void MyWebViewImpl::grantPermission(int deferralId, BOOL isGranted)
 MyWebViewImpl::~MyWebViewImpl()
 {
     m_pController->Close();
-    g_envs.erase(m_folderKey);
     std::cout << "[webview_win_floating] MyWebViewImpl::~MyWebViewImpl()" << std::endl;
 }
 

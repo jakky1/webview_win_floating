@@ -251,6 +251,7 @@ class WinWebViewController {
       _webviewId,
       initialUrl: null,
       userDataFolder: this.params.userDataFolder,
+      profileName: this.params.profileName,
     );
   }
 

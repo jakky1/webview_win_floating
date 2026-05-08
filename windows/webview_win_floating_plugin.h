@@ -40,7 +40,7 @@ class WebviewWinFloatingPlugin : public flutter::Plugin {
 
   void WebviewWinFloatingPlugin::createWebview(const flutter::MethodCall<flutter::EncodableValue> &method_call,
     std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> &result,
-    int webviewId, std::string url, std::string userDataFolder);
+    int webviewId, std::string url, std::string userDataFolder, std::string profileName);
   void destroyAllWebViews();
   // Jacky }
 };

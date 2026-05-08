@@ -39,6 +39,7 @@ abstract class WebviewWinFloatingPlatform extends PlatformInterface {
     int webviewId, {
     String? initialUrl,
     String? userDataFolder,
+    String? profileName,
   }) {
     throw UnimplementedError();
   }
