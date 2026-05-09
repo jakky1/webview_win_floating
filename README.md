@@ -316,6 +316,11 @@ final controller = WinWebViewController();
 controller.setVisibility(false); // hide webview
 ```
 
+Additional information:
+- To detect navigator push/pop, see the sample code in [RouteObserver](https://api.flutter.dev/flutter/widgets/RouteObserver-class.html)
+- To detect widget visibility changes, see package [visibility_detector](https://pub.dev/packages/visibility_detector)
+
+With the information above, you can manually trigger WebView visibility by hooking into navigator.push / pop events or widget visibility changes.
 
 # TroubleShooting
 
