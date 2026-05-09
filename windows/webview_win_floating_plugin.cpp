@@ -21,7 +21,7 @@ std::shared_ptr<WCHAR[]> utf8ToUtf16(std::string str8) {
   int arrSize = (int) str8.length() + 1;
   std::shared_ptr<WCHAR[]> str16(new WCHAR[arrSize]);
   auto convResult = MultiByteToWideChar(CP_UTF8, 0, str8.c_str(), -1, str16.get(), arrSize);
-  if (convResult < 0) {
+  if (convResult == 0) {
     std::cout << "[webview_win_floating] native convert tring to utf16 (WCHAR*) failed: str = " << str8 << std::endl;
   }
 
@@ -63,7 +63,7 @@ WebviewWinFloatingPlugin::~WebviewWinFloatingPlugin() {
 
 void WebviewWinFloatingPlugin::createWebview(const flutter::MethodCall<flutter::EncodableValue> &method_call,
     std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> &result,
-    int webviewId, std::string url, std::string userDataFolder) {
+    int webviewId, std::string url, std::string userDataFolder, std::string profileName) {
 
   std::shared_ptr<flutter::MethodResult<flutter::EncodableValue>> shared_result = std::move(result);
   MyWebViewCreateParams params;
@@ -182,14 +182,25 @@ void WebviewWinFloatingPlugin::createWebview(const flutter::MethodCall<flutter::
   WCHAR wUserDataFolder[1024];
   if (!userDataFolder.empty()) {
     auto convResult = MultiByteToWideChar(CP_UTF8, 0, userDataFolder.c_str(), -1, wUserDataFolder, sizeof(wUserDataFolder) / sizeof(WCHAR));
-    if (convResult < 0) {
+    if (convResult == 0) {
       std::cout << "[webview_win_floating] native convert userDataFolder to utf16 (WCHAR*) failed: path = " << userDataFolder << std::endl;
     } else {
       pwUserDataFolder = wUserDataFolder;
     }
   }
 
-  MyWebView::Create(m_nativeHWND, params, pwUserDataFolder);
+  PCWSTR pwProfileName = NULL;
+  WCHAR wProfileName[256];
+  if (!profileName.empty()) {
+    auto convResult = MultiByteToWideChar(CP_UTF8, 0, profileName.c_str(), -1, wProfileName, sizeof(wProfileName) / sizeof(WCHAR));
+    if (convResult == 0) {
+      std::cout << "[webview_win_floating] native convert profileName to utf16 (WCHAR*) failed: name = " << profileName << std::endl;
+    } else {
+      pwProfileName = wProfileName;
+    }
+  }
+
+  MyWebView::Create(m_nativeHWND, params, pwUserDataFolder, pwProfileName);
 }
 
 void WebviewWinFloatingPlugin::destroyAllWebViews() {
@@ -226,7 +237,8 @@ void WebviewWinFloatingPlugin::HandleMethodCall(
   if (isCreateCall) {
     auto url = std::get<std::string>(arguments[flutter::EncodableValue("url")]);
     auto userDataFolder = std::get<std::string>(arguments[flutter::EncodableValue("userDataFolder")]);
-    createWebview(method_call, result, webviewId, url, userDataFolder);
+    auto profileName = std::get<std::string>(arguments[flutter::EncodableValue("profileName")]);
+    createWebview(method_call, result, webviewId, url, userDataFolder, profileName);
   } else if (method_call.method_name().compare("setHasNavigationDecision") == 0) {
     auto hasNavigationDecision = std::get<bool>(arguments[flutter::EncodableValue("hasNavigationDecision")]);
     webview->setHasNavigationDecision(hasNavigationDecision);

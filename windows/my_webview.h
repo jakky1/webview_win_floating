@@ -36,7 +36,8 @@ class MyWebView
 public:
 	static MyWebView* Create(HWND hWnd,
 		MyWebViewCreateParams params,
-		PCWSTR pwUserDataFolder = NULL);
+		PCWSTR pwUserDataFolder = NULL,
+		PCWSTR pwProfileName = NULL);
 
 	//MyWebView();
 	virtual ~MyWebView() {};

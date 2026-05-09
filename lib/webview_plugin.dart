@@ -137,11 +137,23 @@ typedef WindowsPlatformWebViewControllerCreationParams // legacy name
 class WindowsWebViewControllerCreationParams
     extends PlatformWebViewControllerCreationParams {
   final String? userDataFolder;
+
+  /// Optional profile name for session isolation.
+  ///
+  /// When specified, WebView2 will use a named profile to isolate cookies,
+  /// cache, and storage from other WebView instances, while sharing the same
+  /// underlying browser process (more memory-efficient than separate
+  /// environments). This works like Chrome's user profiles.
+  ///
+  /// See: https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/multi-profile-support
+  final String? profileName;
+
   final bool suspendDuringDeactive;
 
   /// Creates a new [WindowsPlatformWebViewControllerCreationParams] instance.
   const WindowsWebViewControllerCreationParams({
     this.userDataFolder,
+    this.profileName,
     this.suspendDuringDeactive = true,
   }) : super();
 
