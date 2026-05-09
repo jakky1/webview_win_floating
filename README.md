@@ -1,7 +1,8 @@
 # webview_win_floating
 
-Flutter webView for Windows / Linux.
-It's also a plugin that implements the interface of [webview_flutter][1].
+A desktop Flutter WebView plugin for Windows and Linux.
+
+It exposes the same API as [webview_flutter][1], so you can reuse familiar WebView code while targeting desktop platforms.
 
 #### BREAKING CHANGES
 For developers upgrading from version 2.x to 3.x, please refer to [API BREAKING CHANGES](https://github.com/jakky1/webview_win_floating/blob/master/BREAKING_CHANGES.md)
@@ -15,64 +16,50 @@ For developers upgrading from version 2.x to 3.x, please refer to [API BREAKING 
 | Windows | &#x2705; | [WebView2](https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2?view=webview2-1.0.3537.50) |
 |    Linux  |    &#x2705;   | [webkit2gtk-4.1](https://webkitgtk.org/reference/webkit2gtk/2.38.4/) |
 
-You can call API of [webview_flutter](https://pub.dev/packages/webview_flutter) to use this package.
+You can write your app against the [webview_flutter][1] API and use this package as the desktop implementation.
 
-Meaning your app can run seamlessly across `ALL platforms`.
+## Highlights
+- Native WebView rendering on Windows and Linux.
+- High-performance video playback and scrolling.
+- Compatible with the [webview_flutter][1] API on supported platforms.
 
+## Limitations
 
-## Features & Limitations
+This package places a native WebView directly on top of the Flutter window instead of rendering it as a texture.
 
-This package place a native webview component on top of the window, no texture involved. That's why it called "floating", so:
-```
-On Windows / Linux, 
-all Flutter widgets cannot be displayed above the webview.
-```
-
-However, since it is a native WebView component, without texture involved, so:
-```
-the webview runs smoothly at a high fps, 
-just the same with a native WebView,
-especially during playing video or scrolling.
-```
-
-Features:
-- runs smooth at a high fps
-- support fullscreen
-- support all platforms (with package `webview_flutter`)
-
-Limitations: (only in Windows / Linux)
-- all the Flutter widgets cannot be displayed on top of the webview
-- cannot push a new route on top of the webview
-- There are some limitation switching focus  between webview and flutter widgets via Tab key.
-- The webview can be put in a scrollable widget, but you may need to assign a ScrollController to the scrollable widget (to enable reposition the webview when scrolling).
-- The webview cannot be clipped by Flutter. So if the webview is put in a scrollable, and the webview is outside of the scrollable, the webview is still visible. (However, if the scrollable is filled with the window size, then this issue can be ignored)
+That design has a tradeoff:
+- You get **native WebView performance and smooth video playback**.
+- Flutter **widgets CANNOT render above the WebView** on Windows and Linux.
+- You **cannot push a new route above the WebView**.
+- **Tab-key focus switching** between Flutter and WebView has some limitations.
+- Flutter **cannot clip the WebView**, so it may remain visible even when scrolled outside its parent area.
+- If the WebView is placed inside a scrollable widget, you may need a ScrollController so it can be repositioned while scrolling.
 
 Hmm... there are so many limitations.
 
-So, only use this package when:
-- need to play videos smoothly 
-- need a fluid scrolling experience
-- if you don't mind the issue of widgets not being able to display above the webview
+#### Workaround
+
+If your application targets only Windows or Linux, refer to the [Standalone mode] section below and use `controller.setVisibility(bool)` to toggle the WebView visibility."
+
+## When to Use It ##
+Use this package if:
+- You need smooth video playback.
+- You care about scroll performance.
+- You do not need Flutter overlays above the WebView.
 
 ## For Linux platform
 
-Refer to [this link](https://github.com/jakky1/webview_win_floating/blob/master/README_Linux.md) to learn about the important considerations when building app.
+Linux has a few build-time considerations. See [README_Linux.md](https://github.com/jakky1/webview_win_floating/blob/master/README_Linux.md) for details.
 
 ## Installation
 
-Add this to your package's `pubspec.yaml` file:
+Add the package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
   webview_win_floating: ^3.0.0
   webview_flutter: ^4.13.0
 ```
-
-# Problem shootting for building fail
-
-If you build fail with this package, and the error message has the keyword "**MSB3073**":
-
-- run "**flutter build .**" in command line in [**Administrator**] mode
 
 # Usage
 
@@ -96,13 +83,14 @@ Widget build(BuildContext context) {
 }
 ```
 
-#### enable javascript
-don't forgot to add this line if you want to enable javascript:
+#### Javascript
+
+Enable JavaScript before loading pages that need it:
 ```dart
 controller.setJavaScriptMode(JavaScriptMode.unrestricted);
 ```
 
-#### restricted user navigation
+#### Navigation Control
 For example, to disable the facebook / twitter links in youtube website:
 ```dart
 controller.setNavigationDelegate(NavigationDelegate(
@@ -143,8 +131,9 @@ myChannelName.postMessage("This message is from javascript");
 ''';
 ```
 
-#### Listen to events
+#### Events
 
+Supported callbacks include:
 - onPageStarted
 - onPageFinished
 - onUrlChange
@@ -183,7 +172,7 @@ controller.setNavigationDelegate(NavigationDelegate(
 ));
 ```
 
-## controller operations
+## Controller APIs
 
 - controller.loadRequest(uri)
 - controller.runJavascript( jsStr )
@@ -210,9 +199,9 @@ So the controller object may not be disposed immediately when no any pointer kee
 
 ## Permission request (e.g., Notification, Camera)
 
-Some websites use javascript to ask webview to provide certain access permissions. For example, javascript ask "Notification" permission to show notifications, ask "Camera" to access camera device.
+Some websites request permissions such as notifications or camera access.
 
-You can decide whether to authorize these permission requests.
+If you do not provide onPermissionRequest, all permission requests are denied by default.
 
 For example, you can test `Notification` permission with the following code, in [this site](https://www.bennish.net/web-notifications.html)
 
@@ -250,11 +239,22 @@ enum WinWebViewPermissionResourceType {
 }
 ```
 
-## set user data folder
+## User Data Folder & Profiles (Windows only)
+
+User Data Folder:
+- You can configure custom storage paths for browser data, including cache, cookies, and session information.
+- If your app is installed in a read-only location such as `C:\Program Files\`, set a custom user data folder.
+
+Profiles:
+- You can specify a Profile Name, similar to the "User Profile" mechanism in Google Chrome.
+- Data for each profile is stored in: `<UserDataFolder>/EBWebView/WV2Profile_<ProfileName>/`
+- Isolation: Cookies, cache, and other browser data are stored separately.
+
 
 ```dart
 String cacheDir = "c:\\test";
-var params = WindowsWebViewControllerCreationParams(userDataFolder: cacheDir);
+String profileName = "UserA";
+var params = WindowsWebViewControllerCreationParams(userDataFolder: cacheDir, profileName: profileName);
 var controller = WebViewController.fromPlatformCreationParams(params);
 ```
 
@@ -266,9 +266,9 @@ If your application build with InnoSetup, or can be installed in "C:/Program Fil
 In this case, you should specify user data folder as mentioned above.
 
 
-# standalone mode
+# Standalone Mode
 
-If your app only runs on Windows, and you want to remove library dependencies as many as possible, you can modify `pubspec.yaml` file:
+If your app only targets Windows and you want fewer dependencies, you can remove the `webview_flutter` dependency:
 
 ```yaml
 dependencies:
@@ -276,7 +276,7 @@ dependencies:
   # webview_flutter: ^4.13.0  # mark this line for Windows only app
 ```
 
-and modify all the following class name in your code:
+Then rename the core classes:
 ```dart
 WebViewWidget -> WinWebViewWidget  // add "Win" prefix
 WebViewController -> WinWebViewController  // add "Win" prefix
@@ -299,20 +299,26 @@ final controller = WinWebViewController(onPermissionRequest: (req) {
 });
 ```
 
-There are some Windows-only API:
+# Windows and Linux only APIs
+
+The standalone Windows API also includes:
+* controller.setVisibility(bool): show / hide webview
 * onPageTitleChanged` callback in WinNavigationDelegate
 * onHistoryChanged` callback in WinNavigationDelegate
 * controller.openDevTools()
 * controller.dispose()
-* controller.setStatusBar(bool isEnable): show/hide [status bar](https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2settings.isstatusbarenabled)
+* controller.setStatusBar(bool isEnable): show/hide [status bar](https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2settings.isstatusbarenabled) (Windows-only)
 
 
 # TroubleShooting
 
+## Build Fails with MSB3073
+
+If your build fails with an error containing `MSB3073`, run the build command from an `Administrator` terminal.
+
 ## javascript 'history.back()' issue
 
-If javascript `history.back()` is used in your project, please remove `NavigationDelegate.onNavigationRequest()` implementation in your code, which causes the `history.back()` work incorrectly.
-
+If you use `history.back()` in JavaScript, remove your `NavigationDelegate.onNavigationRequest()` implementation. That callback can interfere with back navigation.
 
 # Example
 
