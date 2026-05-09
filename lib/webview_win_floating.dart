@@ -164,7 +164,7 @@ class _WinWebViewWidgetState extends State<WinWebViewWidget> {
     if (widget.controller.params.suspendDuringDeactive) {
       widget.controller._resume();
     } else {
-      widget.controller._setVisibility(true);
+      widget.controller.setVisibility(true);
     }
   }
 
@@ -174,7 +174,7 @@ class _WinWebViewWidgetState extends State<WinWebViewWidget> {
     if (widget.controller.params.suspendDuringDeactive) {
       widget.controller._suspend();
     } else {
-      widget.controller._setVisibility(false);
+      widget.controller.setVisibility(false);
     }
   }
 
@@ -448,7 +448,7 @@ class WinWebViewController {
     }
   }
 
-  Future<void> _setVisibility(bool isVisible) async {
+  Future<void> setVisibility(bool isVisible) async {
     await _initFuture;
     await WebviewWinFloatingPlatform.instance.setVisibility(
       _webviewId,
