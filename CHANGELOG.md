@@ -1,3 +1,8 @@
+## 3.0.3
+
+* Feature: set `profileName` to the WebView. WebViews with different profiles will not share cookies or other data. (Windows-only)
+* Feature: controller.setVisibility(bool) to show/hide webview (in standalone mode)
+
 ## 3.0.2
 
 * Support multi window with package `desktop_multi_window`

@@ -299,7 +299,7 @@ final controller = WinWebViewController(onPermissionRequest: (req) {
 });
 ```
 
-# Windows and Linux only APIs
+## Windows and Linux only APIs
 
 The standalone Windows API also includes:
 * controller.setVisibility(bool): show / hide webview
@@ -308,6 +308,13 @@ The standalone Windows API also includes:
 * controller.openDevTools()
 * controller.dispose()
 * controller.setStatusBar(bool isEnable): show/hide [status bar](https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2settings.isstatusbarenabled) (Windows-only)
+
+## show / hide webview
+
+```dart
+final controller = WinWebViewController();
+controller.setVisibility(false); // hide webview
+```
 
 
 # TroubleShooting
