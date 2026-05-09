@@ -39,7 +39,7 @@ Hmm... there are so many limitations.
 
 #### Workaround
 
-If your application targets only Windows or Linux, refer to the [Standalone mode] section below and use `controller.setVisibility(bool)` to toggle the WebView visibility."
+If your application targets only Windows or Linux, refer to the [Standalone mode] section below and use `controller.setVisibility(bool)` to toggle the WebView visibility.
 
 ## When to Use It ##
 Use this package if:
